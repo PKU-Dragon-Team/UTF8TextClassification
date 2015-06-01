@@ -13,5 +13,10 @@ struct text_list {
 	size_t len;
 };
 
-void load_texts(const struct text_list * l, FILE * in);
-void output_texts(const struct text_list * l, FILE * out);
+int init_text_list(struct text_list ** l);
+int resize_text_list(struct text_list * l, size_t len);
+int clear_text_list(struct text_list ** l);
+
+int load_texts(const struct text_list * l, FILE * in);
+int parse_type(uchar * ts, int8_t types[TYPE_COUNT]);
+int output_texts(const struct text_list * l, FILE * out);
