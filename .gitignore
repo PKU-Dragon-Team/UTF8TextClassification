@@ -207,3 +207,4 @@ ModelManifest.xml
 
 # Visual Studio 6 workspace options file
 *.opt
+/UTF8TextClassification/in.txt
