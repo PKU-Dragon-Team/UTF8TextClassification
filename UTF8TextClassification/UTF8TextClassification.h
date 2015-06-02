@@ -16,7 +16,10 @@ struct text_list {
 	size_t len;
 };
 
-int init_text_list(struct text_list ** l);
+int init_text(struct text ** t, struct ustring * us, int8_t types[TYPE_COUNT]);
+int clear_text(struct text ** t);
+
+int init_text_list(struct text_list ** l, struct text * list, size_t len);
 int resize_text_list(struct text_list * l, size_t len);
 int clear_text_list(struct text_list ** l);
 
