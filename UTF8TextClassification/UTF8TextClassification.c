@@ -12,7 +12,7 @@ int init_text(struct text ** t, struct ustring * us, int8_t types[TYPE_COUNT]) {
 
 	(*t)->text = us;
 
-	for (int i = 0; i < 4; ++i) {
+	for (int i = 0; i < TYPE_COUNT; ++i) {
 		(*t)->types[i] = types[i];
 	}
 	return 0;
@@ -75,6 +75,15 @@ int resize_text_list(struct text_list * l, size_t len) {
 }
 
 int clear_text_list(struct text_list ** l) {
+	if (l == NULL) {
+		return -1;
+	}
+	for (size_t i = 0; i < (*l)->len; ++i) {
+		clear_ustring(&(*l)->list[i].text);
+	}
+	free((*l)->list);
+	free(*l);
+	*l = NULL;
 	return 0;
 }
 
@@ -115,9 +124,27 @@ int parse_type(uchar * ts, int8_t types[TYPE_COUNT]) {
 	if (ts == NULL) {
 		return -1;
 	}
+
+	if (sscanf_s(ts, "%d%d%d%d", &types[0], &types[1], &types[2], &types[3]) == 0) {
+		for (int i = 0; i < TYPE_COUNT; ++i) {
+			types[i] = -1;
+		}
+	}
 	return 0;
 }
 
 int output_texts(const struct text_list * l, FILE * out) {
+	if (l == NULL || out == NULL) {
+		return -1;
+	}
+	for (size_t i = 0; i < l->len; ++i) {
+		fprintf_s(out, "***%d\n%s\n***(", i, l->list[i].text->string, l->list[i].text->string_len);
+		for (int j = 0; j < TYPE_COUNT; ++j) {
+			if (l->list[i].types[j] != -1) {
+				fprintf_s(out, "%d", l->list[i].types[j]);
+			}
+		}
+		fprintf_s(out, ")\n");
+	}
 	return 0;
 }
