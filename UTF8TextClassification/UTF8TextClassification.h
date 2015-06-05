@@ -4,7 +4,7 @@
 #include "ucharLib.h"
 
 #define TYPE_COUNT 4
-#define BUF_SIZE BUFSIZ
+#define BUF_SIZE 10000
 
 struct text {
 	struct ustring * text;

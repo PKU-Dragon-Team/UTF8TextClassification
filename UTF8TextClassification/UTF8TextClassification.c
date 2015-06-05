@@ -42,7 +42,7 @@ int init_text_list(struct text_list ** l, struct text * list, size_t len) {
 		return -1;
 	}
 
-	if (list = NULL) {
+	if (list == NULL) {
 		(*l)->list = NULL;
 		(*l)->len = 0;
 	}
@@ -93,29 +93,29 @@ int load_texts(struct text_list * l, FILE * in) {
 	}
 	else {
 		uchar s[BUF_SIZE] = { 0 };
-		uchar ts[TYPE_COUNT] = { 0 };
 		size_t i = 0;
 
-		while (fscanf_s(in, "***%*d") != EOF) {
-			fgets(s, BUF_SIZE, in);
-			fscanf_s(in, "***(%s)", ts, TYPE_COUNT);
-
+		while (fgets(s, BUF_SIZE, in)) {	// the first line
+			fgets(s, BUF_SIZE, in);		// the second line
 			struct ustring * us = NULL;
 			init_ustring(&us, index, s, BUF_SIZE);
 
+			fgets(s, BUF_SIZE, in);		// the third line
 			int8_t types[TYPE_COUNT] = { 0 };
-			parse_type(ts, types);
+			parse_type(s, types);
 
 			struct text * t = NULL;
 			init_text(&t, us, types);
 
 			if (i + 1 > l->len) {	// Dynamic Expand
-				if (resize_text_list(l, l->len * 2) != 0) {
+				if (resize_text_list(l, l->len * 2 + 1) != 0) {
 					return -1;
 				}
 			}
 			l->list[i] = *t;
+			++i;
 		}
+		l->len = i;
 	}
 	return 0;
 }
@@ -125,11 +125,19 @@ int parse_type(uchar * ts, int8_t types[TYPE_COUNT]) {
 		return -1;
 	}
 
-	if (sscanf_s(ts, "%d%d%d%d", &types[0], &types[1], &types[2], &types[3]) == 0) {
-		for (int i = 0; i < TYPE_COUNT; ++i) {
-			types[i] = -1;
+	for (int i = 0; i < TYPE_COUNT; ++i) {
+		types[i] = -1;
+	}
+
+	size_t n = strlen(ts);
+	int ti = 0;
+	for (int i = 0; i < n; ++i) {
+		if (ti < TYPE_COUNT && ts[i] != '*' && ts[i] != '(' && ts[i] != ')' && ts[i] != '\n') {
+			types[ti] = ts[i] - '0';
+			++ti;
 		}
 	}
+
 	return 0;
 }
 
@@ -138,13 +146,13 @@ int output_texts(const struct text_list * l, FILE * out) {
 		return -1;
 	}
 	for (size_t i = 0; i < l->len; ++i) {
-		fprintf_s(out, "***%d\n%s\n***(", i, l->list[i].text->string, l->list[i].text->string_len);
+		fprintf_s(out, "***%d\n%s***(", i + 1, l->list[i].text->string, l->list[i].text->string_len);
 		for (int j = 0; j < TYPE_COUNT; ++j) {
 			if (l->list[i].types[j] != -1) {
 				fprintf_s(out, "%d", l->list[i].types[j]);
 			}
 		}
-		fprintf_s(out, ")\n");
+		fprintf_s(out, ")%s", (i == l->len - 1) ? "" : "\n");
 	}
 	return 0;
 }
