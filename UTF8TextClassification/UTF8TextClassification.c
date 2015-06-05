@@ -87,7 +87,7 @@ int clear_text_list(struct text_list ** l) {
 	return 0;
 }
 
-int load_texts(struct text_list * l, FILE * in) {
+int load_texts(FILE * in, struct text_list * l) {
 	if (l == NULL || in == NULL) {
 		return -1;
 	}
@@ -141,7 +141,7 @@ int parse_type(uchar * ts, int8_t types[TYPE_COUNT]) {
 	return 0;
 }
 
-int output_texts(const struct text_list * l, FILE * out) {
+int output_texts(FILE * out, const struct text_list * l) {
 	if (l == NULL || out == NULL) {
 		return -1;
 	}
@@ -155,4 +155,22 @@ int output_texts(const struct text_list * l, FILE * out) {
 		fprintf_s(out, ")%s", (i == l->len - 1) ? "" : "\n");
 	}
 	return 0;
+}
+
+void get_char_analysis(const struct text_list * l, struct uchar_analysis * uca) {
+	for (size_t i = 0; i < l->len; ++i) {
+		for (size_t j = 0; j < l->list[i].text->string_len; ++j) {
+			++uca->uchar_list[l->list[i].text->string[j]];
+			++uca->total_count;
+		}
+	}
+}
+
+void output_char_analysis(FILE * out, const struct uchar_analysis * uca) {
+	fprintf_s(out, "Total Characters: %d\n", uca->total_count);
+	for (int i = 0; i < 130000; ++i) {
+		if (uca->uchar_list[i] != 0) {
+			fprintf_s(out, "0x%02X\t%5d\n", i, uca->uchar_list[i]);
+		}
+	}
 }
