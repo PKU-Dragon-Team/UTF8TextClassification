@@ -10,7 +10,7 @@ int init_text(struct text ** t, struct ustring * us, int8_t types[TYPE_COUNT]) {
 		return -1;
 	}
 
-	(*t)->text = us;
+	(*t)->us = us;
 
 	for (int i = 0; i < TYPE_COUNT; ++i) {
 		(*t)->types[i] = types[i];
@@ -24,15 +24,15 @@ int clear_text(struct text ** t) {
 	}
 
 	if (*t != NULL) {
-		if ((*t)->text != NULL) {
-			clear_ustring(&(*t)->text);
+		if ((*t)->us != NULL) {
+			clear_ustring(&(*t)->us);
 		}
 		*t = NULL;
 	}
 	return 0;
 }
 
-int init_text_list(struct text_list ** l, struct text * list, size_t len) {
+int init_text_list(struct text_list ** l, const struct text * list, size_t len) {
 	if (l == NULL) {
 		return -1;
 	}
@@ -79,11 +79,12 @@ int clear_text_list(struct text_list ** l) {
 		return -1;
 	}
 	for (size_t i = 0; i < (*l)->len; ++i) {
-		clear_ustring(&(*l)->list[i].text);
+		clear_ustring(&(*l)->list[i].us);
 	}
 	free((*l)->list);
 	free(*l);
 	*l = NULL;
+
 	return 0;
 }
 
@@ -137,7 +138,6 @@ int parse_type(uchar * ts, int8_t types[TYPE_COUNT]) {
 			++ti;
 		}
 	}
-
 	return 0;
 }
 
@@ -145,8 +145,9 @@ int output_texts(FILE * out, const struct text_list * l) {
 	if (l == NULL || out == NULL) {
 		return -1;
 	}
+
 	for (size_t i = 0; i < l->len; ++i) {
-		fprintf_s(out, "***%d\n%s***(", i + 1, l->list[i].text->string, l->list[i].text->string_len);
+		fprintf_s(out, "***%d\n%s***(", i + 1, l->list[i].us->string, l->list[i].us->string_len);
 		for (int j = 0; j < TYPE_COUNT; ++j) {
 			if (l->list[i].types[j] != -1) {
 				fprintf_s(out, "%d", l->list[i].types[j]);
@@ -157,20 +158,71 @@ int output_texts(FILE * out, const struct text_list * l) {
 	return 0;
 }
 
-void get_char_analysis(const struct text_list * l, struct uchar_analysis * uca) {
+int get_char_analysis(const struct text_list * l, struct uchar_analysis * uca) {
+	if (l == NULL || uca == NULL) {
+		return -1;
+	}
+
 	for (size_t i = 0; i < l->len; ++i) {
-		for (size_t j = 0; j < l->list[i].text->string_len; ++j) {
-			++uca->uchar_list[l->list[i].text->string[j]];
+		for (size_t j = 0; j < l->list[i].us->string_len; ++j) {
+			++uca->uchar_list[l->list[i].us->string[j]];
 			++uca->total_count;
 		}
 	}
+	return 0;
 }
 
-void output_char_analysis(FILE * out, const struct uchar_analysis * uca) {
+int output_char_analysis(FILE * out, const struct uchar_analysis * uca) {
+	if (out == NULL || uca == NULL) {
+		return -1;
+	}
+
 	fprintf_s(out, "Total Characters: %d\n", uca->total_count);
 	for (int i = 0; i < 130000; ++i) {
 		if (uca->uchar_list[i] != 0) {
 			fprintf_s(out, "0x%02X\t%5d\n", i, uca->uchar_list[i]);
 		}
 	}
+	return 0;
+}
+
+int init_hashmap_ustring_analysis(struct hashmap_ustring_analysis ** husa) {
+	if (husa == NULL) {
+		return -1;
+	}
+
+	*husa = malloc(sizeof(struct hashmap_ustring_analysis));
+	if (*husa == NULL) {
+		return -1;
+	}
+
+	(*husa)->usa_list = calloc(BASE_HASH_LEN, sizeof(struct ustring_analysis *));
+	if ((*husa)->usa_list == NULL) {
+		return -1;
+	}
+	(*husa)->hashlen = BASE_HASH_LEN;
+	(*husa)->total_count = 0;
+
+	return 0;
+}
+
+int append_hashmap_ustring_analysis(struct hashmap_ustring_analysis * husa, const struct ustring * us) {
+
+	return 0;
+}
+
+int clear_hashmap_ustring_analysis(struct hashmap_ustring_analysis ** husa) {
+	if (husa == NULL || *husa == NULL || (*husa)->usa_list == NULL) {
+		return -1;
+	}
+
+	for (size_t i = 0; i < (*husa)->hashlen; ++i) {
+		if ((*husa)->usa_list[i] != NULL) {
+			clear_ustring(&(*husa)->usa_list[i]->us);
+		}
+	}
+
+	free((*husa)->usa_list);
+	free(*husa);
+	return 0;
 }
