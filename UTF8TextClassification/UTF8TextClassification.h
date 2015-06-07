@@ -9,7 +9,7 @@
 #define MAX_UNICODE 130000
 
 typedef struct ustring_parse_list * p_uspl;
-typedef p_uspl *parser(const struct ustring * cp_us);
+typedef p_uspl(*parser)(const struct ustring * cp_us);
 
 struct text {
 	struct ustring * us;
@@ -29,14 +29,15 @@ struct uchar_analysis {
 
 struct ustring_analysis {
 	struct ustring * us;
-	size_t hashcode;
 	long long count;
+	struct ustring_analysis * next;
 };
 
 struct hashmap_ustring_analysis {
 	long long total_count;
 	struct ustring_analysis ** usa_list;
 	size_t hashlen;
+	size_t count;
 };
 
 struct ustring_parse_list {
@@ -59,6 +60,7 @@ int get_char_analysis(const struct text_list * cp_tlist, struct uchar_analysis *
 int output_char_analysis(FILE * out, const struct uchar_analysis * uca);
 
 int init_hashmap_ustring_analysis(struct hashmap_ustring_analysis ** pp_husa);
+int rehash_hashmap_ustring_analysis(struct hashmap_ustring_analysis * p_husa, size_t hashlen);
 int append_hashmap_ustring_analysis(struct hashmap_ustring_analysis * p_husa, const struct ustring * cp_us, parser f);
 int clear_hashmap_ustring_analysis(struct hashmap_ustring_analysis ** pp_husa);
 p_uspl blankParser(const struct ustring * cp_us);

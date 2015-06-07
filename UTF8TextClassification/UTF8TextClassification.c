@@ -202,12 +202,72 @@ int init_hashmap_ustring_analysis(struct hashmap_ustring_analysis ** pp_husa) {
 	}
 	(*pp_husa)->hashlen = BASE_HASH_LEN;
 	(*pp_husa)->total_count = 0;
+	(*pp_husa)->count = 0;
 
 	return 0;
 }
 
-int append_hashmap_ustring_analysis(struct hashmap_ustring_analysis * p_husa, const struct ustring * cp_us, parser f) {
+int rehash_hashmap_ustring_analysis(struct hashmap_ustring_analysis * p_husa, size_t hashlen) {
+	if (p_husa == NULL) {
+		return -1;
+	}
+	return 0;
+}
 
+int append_hashmap_ustring_analysis(struct hashmap_ustring_analysis * p_husa, const struct ustring * cp_us, parser f) {
+	if (p_husa == NULL || cp_us == NULL || f == NULL) {
+		return -1;
+	}
+
+	p_uspl parse_list = f(cp_us);
+
+	for (size_t i = 0; i < parse_list->len - 1; ++i) {
+		// check if hashmap is overload
+		if (p_husa->count * 2 > p_husa->hashlen) {
+			rehash_hashmap_ustring_analysis(p_husa, p_husa->hashlen * 2 + 1);
+		}
+
+		struct ustring * temp = malloc(sizeof(struct ustring));
+		init_ustring(&temp, index, NULL, 0);
+		slice_ustring(cp_us, temp, parse_list->parse_list[i], parse_list->parse_list[i + 1]);
+
+		size_t hashcode = hash_ustring(temp, 0, p_husa->hashlen);
+		// search for existence
+		struct ustring_analysis * p = p_husa->usa_list[hashcode];
+		if (p != NULL) {
+			while (p->next != NULL) {
+				if (compare_ustring(p->next->us, temp) == 0) {
+					++p->next->count;
+					break;
+				}
+				p = p->next;
+			}
+			if (p->next == NULL) {
+				// while check failed: check p
+				if (compare_ustring(p->us, temp) == 0) {
+					++p->count;
+				}
+				else {
+					// add to the end of link list
+					struct ustring_analysis * p_ua = malloc(sizeof(struct ustring_analysis));
+					p_ua->us = temp;
+					p_ua->count = 1;
+					p_ua->next = NULL;
+					p->next = p_ua;
+				}
+			}
+		}
+		else {
+			// add to the hashmap
+			struct ustring_analysis * p_ua = malloc(sizeof(struct ustring_analysis));
+			p_ua->us = temp;
+			p_ua->count = 1;
+			p_ua->next = NULL;
+			p_husa->usa_list[hashcode] = p_ua;
+			++p_husa->count;
+		}
+		++p_husa->total_count;
+	}
 	return 0;
 }
 
@@ -217,12 +277,21 @@ int clear_hashmap_ustring_analysis(struct hashmap_ustring_analysis ** pp_husa) {
 	}
 
 	for (size_t i = 0; i < (*pp_husa)->hashlen; ++i) {
-		if ((*pp_husa)->usa_list[i] != NULL) {
-			clear_ustring(&(*pp_husa)->usa_list[i]->us);
+		struct ustring_analysis * p = (*pp_husa)->usa_list[i];
+		while (p != NULL) {
+			clear_ustring(&p->us);
+			p = p->next;
 		}
 	}
-
 	free((*pp_husa)->usa_list);
 	free(*pp_husa);
 	return 0;
+}
+
+p_uspl blankParser(const struct ustring * cp_us) {
+	return NULL;
+}
+
+p_uspl ucharParser(const struct ustring * cp_us) {
+	return NULL;
 }
