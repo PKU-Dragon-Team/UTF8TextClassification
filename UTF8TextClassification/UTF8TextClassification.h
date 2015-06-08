@@ -10,7 +10,8 @@
 #define HASH_SEED 0
 
 typedef struct ustring_parse_list * p_uspl;
-typedef p_uspl(*parser)(const struct ustring * cp_us);
+typedef p_uspl(*parser)(const struct ustring * cp_us, uc_checker f);
+typedef bool(*uc_checker)(const uchar uc);
 
 struct text {
 	struct ustring * us;
@@ -48,6 +49,7 @@ struct ustring_parse_list {
 
 // Incert p_usa to the hashcode position of ap_usa
 static void insert_usa_list(struct ustring_analysis * ap_usa[], struct ustring_analysis * p_usa, size_t hashcode);
+static bool is_blank(const uchar uc);
 
 int init_text(struct text ** pp_text, struct ustring * us, int8_t types[TYPE_COUNT]);
 int clear_text(struct text ** pp_text);
@@ -66,13 +68,14 @@ int output_char_analysis(FILE * out, const struct uchar_analysis * uca);
 int init_hash_vector(struct hash_vector ** pp_hv);
 int rehash_hash_vector(struct hash_vector * p_hv, size_t hashlen);
 int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, parser f);
+int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, long long count, struct ustring_analysis * next);
 int add_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
 int sub_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
 long long product_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
 unsigned long long len2_hash_vector(const struct hash_vector * p_hv);
 int clear_hash_vector(struct hash_vector ** pp_hv);
 
-p_uspl blankParser(const struct ustring * cp_us);
-p_uspl ucharParser(const struct ustring * cp_us);
+p_uspl commonParser(const struct ustring * cp_us, uc_checker f);
+p_uspl ucharParser(const struct ustring * cp_us, uc_checker f);
 
 #endif
