@@ -3,6 +3,10 @@
 
 struct uchar_analysis uca = { 0 };
 
+bool checker(const uchar uc) {
+	return uc == '\n' || uc == '\r' || uc == '\t' || uc == ' ' || uc == '.' || uc == ',';
+}
+
 int main(int arc, char * argv[]) {
 	setlocale(LC_ALL, "en_US.UTF-8");
 
@@ -21,8 +25,23 @@ int main(int arc, char * argv[]) {
 	get_char_analysis(tl, &uca);
 	output_char_analysis(out2, &uca);
 
+	FILE * out3;
+	fopen_s(&out3, "out3.txt", "w");
+	for (size_t i = 0; i < tl->len; ++i) {
+		struct hash_vector * temp = malloc(sizeof(struct hash_vector));
+		init_hash_vector(&temp);
+		append_hash_vector(temp, tl->list[i].us, commonParser, checker);
+		tl->list[i].usa = temp;
+		output_hash_vector(out3, temp);
+	}
+
+	for (size_t i = 0; i < tl->len; ++i) {
+		clear_hash_vector(&tl->list[i].usa);
+	}
+
 	fclose(in);
 	fclose(out);
 	fclose(out2);
+	fclose(out3);
 	return 0;
 }
