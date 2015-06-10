@@ -10,7 +10,7 @@
 #define HASH_SEED 0
 
 typedef struct ustring_parse_list * p_uspl;
-typedef bool(*uc_checker)(const uchar uc);
+typedef bool(*uc_checker)(const uchar uc[]);
 typedef p_uspl(*parser)(const struct ustring * cp_us, uc_checker f);
 
 struct text {
@@ -51,7 +51,7 @@ struct ustring_parse_list {
 static void insert_usa_list(struct ustring_analysis * ap_usa[], struct ustring_analysis * p_usa, size_t hashcode);
 
 // Check if uc is blank
-static bool is_blank(const uchar uc);
+static bool is_blank(const uchar uc[]);
 
 int init_text(struct text ** pp_text, struct ustring * us, int8_t types[TYPE_COUNT]);
 int clear_text(struct text ** pp_text);
@@ -85,6 +85,7 @@ int clear_hash_vector(struct hash_vector ** pp_hv);
 
 p_uspl commonParser(const struct ustring * cp_us, uc_checker f);
 p_uspl ucharParser(const struct ustring * cp_us, uc_checker f);
+int clear_parse_list(p_uspl pl);
 
 void output_hash_vector(FILE * out, const struct hash_vector * p_hv);
 

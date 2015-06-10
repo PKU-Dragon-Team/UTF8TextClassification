@@ -3,8 +3,8 @@
 
 struct uchar_analysis uca = { 0 };
 
-bool checker(const uchar uc) {
-	return uc == '\n' || uc == '\r' || uc == '\t' || uc == ' ' || uc == '.' || uc == ',';
+bool checker(const uchar uc[]) {
+	return *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ' || *uc == '.' || *uc == ',';
 }
 
 int main(int arc, char * argv[]) {

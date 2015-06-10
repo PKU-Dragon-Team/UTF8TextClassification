@@ -13,8 +13,8 @@ static void insert_usa_list(struct ustring_analysis * ap_usa[], struct ustring_a
 	}
 }
 
-static bool is_blank(const uchar uc) {
-	return uc == '\n' || uc == '\r' || uc == '\t' || uc == ' ';
+static bool is_blank(const uchar uc[]) {
+	return *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ';
 }
 
 int init_text(struct text ** pp_text, struct ustring * us, int8_t types[TYPE_COUNT]) {
@@ -267,16 +267,10 @@ int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, 
 
 		struct ustring * temp = malloc(sizeof(struct ustring));
 		init_ustring(&temp, index, NULL, 0);
-		temp->string_len = parse_list->index[i + 1] - parse_list->index[i] - 1;
-		temp->string = calloc(temp->string_len, sizeof(uchar));
-		size_t j;
-		for (j = 0; j < temp->string_len; ++j) {
-			temp->string[j] = cp_us->string[parse_list->index[i] + j];
-		}
-		temp->string[j] = '\0';
-		refresh_ustring_index(temp);
+		slice_ustring(cp_us, temp, parse_list->index[i], parse_list->index[i + 1]);
 		insert_hash_vector(p_hv, temp, 1, NULL);
 	}
+	clear_parse_list(parse_list);
 	return 0;
 }
 
@@ -421,11 +415,11 @@ p_uspl commonParser(const struct ustring * cp_us, uc_checker f) {
 	}
 
 	p_uspl p = malloc(sizeof(p_uspl));
-	p->index = calloc(cp_us->string_len + 2, sizeof(size_t));
+	p->index = calloc(cp_us->index_len, sizeof(size_t));
 
 	size_t j = 0;
-	for (size_t i = 0; i < cp_us->string_len; ++i) {
-		if (f(cp_us->string[i])) {
+	for (size_t i = 0; i < cp_us->index_len; ++i) {
+		if (f(&cp_us->string[cp_us->index[i]])) {
 			p->index[j] = i;
 			++j;
 		}
@@ -456,4 +450,13 @@ void output_hash_vector(FILE * out, const struct hash_vector * p_hv) {
 		}
 	}
 	fprintf_s(out, "\n");
+}
+
+int clear_parse_list(p_uspl pl) {
+	if (pl == NULL) {
+		return -1;
+	}
+	free(pl->index);
+	free(pl);
+	return 0;
 }
