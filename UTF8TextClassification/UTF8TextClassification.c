@@ -249,28 +249,29 @@ int rehash_hash_vector(struct hash_vector * p_hv, size_t hashlen) {
 	return 0;
 }
 
-int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, parser f, uc_checker cf) {
+int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, Parser f, Checker cf) {
 	if (p_hv == NULL || cp_us == NULL || f == NULL) {
 		return -1;
 	}
 
-	p_uspl parse_list = f(cp_us, cf);
+	struct ustring_parse_list * p_uspl = malloc(sizeof(struct ustring_parse_list));
+	f(p_uspl, cp_us, cf);
 
-	for (size_t i = 0; i + 1 < parse_list->len; ++i) {
-		if (parse_list->index[i] + 1 == parse_list->index[i + 1]) {
+	for (size_t i = 0; i + 1 < p_uspl->len; ++i) {
+		if (p_uspl->index[i] + 1 == p_uspl->index[i + 1]) {
 			continue;
 		}
-		// check if hashmap is overload
+		// check if hash-map is overload
 		if (p_hv->count * 2 > p_hv->hashlen) {
 			rehash_hash_vector(p_hv, p_hv->hashlen * 2 + 1);
 		}
 
 		struct ustring * temp = malloc(sizeof(struct ustring));
 		init_ustring(&temp, index, NULL, 0);
-		slice_ustring(cp_us, temp, parse_list->index[i], parse_list->index[i + 1]);
+		slice_ustring(cp_us, temp, p_uspl->index[i], p_uspl->index[i + 1]);
 		insert_hash_vector(p_hv, temp, 1, NULL);
 	}
-	clear_parse_list(parse_list);
+	clear_uspl(p_uspl);
 	return 0;
 }
 
@@ -312,7 +313,7 @@ int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, lon
 		}
 	}
 	else {
-		// add to the hashmap
+		// add to the hash-map
 		p_hv->usa_list[hashcode] = p_ua;
 		++p_hv->count;
 	}
@@ -409,12 +410,14 @@ int clear_hash_vector(struct hash_vector ** pp_hv) {
 	return 0;
 }
 
-p_uspl commonParser(const struct ustring * cp_us, uc_checker f) {
+int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, Checker f) {
+	if (p == NULL || cp_us == NULL) {
+		return -1;
+	}
 	if (f == NULL) {
 		f = is_blank;
 	}
 
-	p_uspl p = malloc(sizeof(p_uspl));
 	p->index = calloc(cp_us->index_len, sizeof(size_t));
 
 	size_t j = 0;
@@ -426,37 +429,41 @@ p_uspl commonParser(const struct ustring * cp_us, uc_checker f) {
 	}
 	p->index = realloc(p->index, j * sizeof(size_t));
 	p->len = j - 1;
-	return p;
+
+	return 0;
 }
 
-p_uspl ucharParser(const struct ustring * cp_us, uc_checker f) {
-	p_uspl p = malloc(sizeof(p_uspl));
+int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, Checker f) {
+	if (p == NULL || cp_us == NULL) {
+		return -1;
+	}
 	p->index = calloc(cp_us->index_len, sizeof(size_t));
 	p->len = cp_us->index_len;
 
 	for (size_t i = 0; i < cp_us->index_len; ++i) {
 		p->index[i] = cp_us->index[i];
 	}
-	return p;
+	return 0;
+}
+
+int clear_uspl(struct ustring_parse_list * p_uspl) {
+	if (p_uspl == NULL) {
+		return -1;
+	}
+	if (p_uspl->index != NULL) {
+		free(p_uspl->index);
+	}
+	return 0;
 }
 
 void output_hash_vector(FILE * out, const struct hash_vector * p_hv) {
-	fprintf_s(out, "count: %d\ttotal_count: %d\thashlen: %d\t", p_hv->count, p_hv->total_count, p_hv->hashlen);
+	fprintf_s(out, "count: %d\ttotal_count: %d\thashlen: %d\n", p_hv->count, p_hv->total_count, p_hv->hashlen);
 	for (size_t i = 0; i < p_hv->hashlen; ++i) {
 		struct ustring_analysis * p = p_hv->usa_list[i];
 		while (p != NULL) {
-			fprintf_s(out, "%s:%d\t", p->us->string, p->us->string_len, p->count);
+			fprintf_s(out, "%s:%d\t", p->us->string, p->count);
 			p = p->next;
 		}
 	}
 	fprintf_s(out, "\n");
-}
-
-int clear_parse_list(p_uspl pl) {
-	if (pl == NULL) {
-		return -1;
-	}
-	free(pl->index);
-	free(pl);
-	return 0;
 }

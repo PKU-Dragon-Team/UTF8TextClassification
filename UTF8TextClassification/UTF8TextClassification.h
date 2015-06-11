@@ -9,9 +9,8 @@
 #define MAX_UNICODE 130000
 #define HASH_SEED 0
 
-typedef struct ustring_parse_list * p_uspl;
-typedef bool(*uc_checker)(const uchar uc[]);
-typedef p_uspl(*parser)(const struct ustring * cp_us, uc_checker f);
+typedef bool(*Checker)(const uchar uc[]);
+typedef int(*Parser)(struct ustring_parse_list * p, const struct ustring * cp_us, Checker f);
 
 struct text {
 	struct ustring * us;
@@ -71,7 +70,7 @@ int init_hash_vector(struct hash_vector ** pp_hv);
 int rehash_hash_vector(struct hash_vector * p_hv, size_t hashlen);
 
 // Parse cp_us with f and use the result to build the p_hv
-int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, parser f, uc_checker cf);
+int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, Parser f, Checker cf);
 
 // Insert the us, count, next as a struct ustring_analysis into p_hv
 int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, long long count, struct ustring_analysis * next);
@@ -83,9 +82,9 @@ unsigned long long len2_hash_vector(const struct hash_vector * p_hv);
 
 int clear_hash_vector(struct hash_vector ** pp_hv);
 
-p_uspl commonParser(const struct ustring * cp_us, uc_checker f);
-p_uspl ucharParser(const struct ustring * cp_us, uc_checker f);
-int clear_parse_list(p_uspl pl);
+int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, Checker f) ;
+int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, Checker f) ;
+int clear_uspl(struct ustring_parse_list * p_uspl);
 
 void output_hash_vector(FILE * out, const struct hash_vector * p_hv);
 
