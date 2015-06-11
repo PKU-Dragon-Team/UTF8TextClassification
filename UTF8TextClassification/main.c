@@ -4,7 +4,7 @@
 struct uchar_analysis uca = { 0 };
 
 bool checker(const uchar uc[]) {
-	return *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ' || *uc == '.' || *uc == ',';
+	return *uc == '\0' || *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ' || *uc == '.' || *uc == ',';
 }
 
 int main(int arc, char * argv[]) {
@@ -30,7 +30,7 @@ int main(int arc, char * argv[]) {
 	for (size_t i = 0; i < tl->len; ++i) {
 		struct hash_vector * temp = malloc(sizeof(struct hash_vector));
 		init_hash_vector(&temp);
-		append_hash_vector(temp, tl->list[i].us, commonParser, checker);
+		append_hash_vector(temp, tl->list[i].us, ucharParser, checker);
 		tl->list[i].usa = temp;
 		output_hash_vector(out3, temp);
 	}

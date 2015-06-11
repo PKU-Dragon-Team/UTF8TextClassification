@@ -42,7 +42,8 @@ struct hash_vector {
 };
 
 struct ustring_parse_list {
-	size_t * index;
+	size_t * start;
+	size_t * end;
 	size_t len;
 };
 

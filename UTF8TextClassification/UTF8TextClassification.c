@@ -257,10 +257,7 @@ int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, 
 	struct ustring_parse_list * p_uspl = malloc(sizeof(struct ustring_parse_list));
 	f(p_uspl, cp_us, cf);
 
-	for (size_t i = 0; i + 1 < p_uspl->len; ++i) {
-		if (p_uspl->index[i] + 1 == p_uspl->index[i + 1]) {
-			continue;
-		}
+	for (size_t i = 0; i + 1 <= p_uspl->len; ++i) {
 		// check if hash-map is overload
 		if (p_hv->count * 2 > p_hv->hashlen) {
 			rehash_hash_vector(p_hv, p_hv->hashlen * 2 + 1);
@@ -268,7 +265,7 @@ int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, 
 
 		struct ustring * temp = malloc(sizeof(struct ustring));
 		init_ustring(&temp, index, NULL, 0);
-		slice_ustring(cp_us, temp, p_uspl->index[i], p_uspl->index[i + 1]);
+		slice_ustring(cp_us, temp, p_uspl->start[i], p_uspl->end[i]);
 		insert_hash_vector(p_hv, temp, 1, NULL);
 	}
 	clear_uspl(p_uspl);
@@ -418,17 +415,29 @@ int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, Ch
 		f = is_blank;
 	}
 
-	p->index = calloc(cp_us->index_len, sizeof(size_t));
+	p->start = calloc(cp_us->index_len + 1, sizeof(size_t));
+	p->end = calloc(cp_us->index_len + 1, sizeof(size_t));
 
 	size_t j = 0;
-	for (size_t i = 0; i < cp_us->index_len; ++i) {
+	bool inword = false;
+	for (size_t i = 0; i <= cp_us->index_len; ++i) {
 		if (f(&cp_us->string[cp_us->index[i]])) {
-			p->index[j] = i;
-			++j;
+			if (inword) {
+				p->end[j] = i;
+				++j;
+				inword = false;
+			}
+		}
+		else {
+			if (!inword) {
+				p->start[j] = i;
+				inword = true;
+			}
 		}
 	}
-	p->index = realloc(p->index, j * sizeof(size_t));
-	p->len = j - 1;
+	p->start = realloc(p->start, j * sizeof(size_t));
+	p->end = realloc(p->end, j * sizeof(size_t));
+	p->len = j;
 
 	return 0;
 }
@@ -437,12 +446,19 @@ int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, Che
 	if (p == NULL || cp_us == NULL) {
 		return -1;
 	}
-	p->index = calloc(cp_us->index_len, sizeof(size_t));
-	p->len = cp_us->index_len;
+	p->start = calloc(cp_us->index_len + 1, sizeof(size_t));
+	p->end = calloc(cp_us->index_len + 1, sizeof(size_t));
 
+	size_t j = 0;
 	for (size_t i = 0; i < cp_us->index_len; ++i) {
-		p->index[i] = cp_us->index[i];
+		if (f(&cp_us->string[cp_us->index[i]])) {
+			continue;
+		}
+		p->start[j] = i;
+		p->end[j] = i + 1;
+		++j;
 	}
+	p->len = j;
 	return 0;
 }
 
@@ -450,8 +466,11 @@ int clear_uspl(struct ustring_parse_list * p_uspl) {
 	if (p_uspl == NULL) {
 		return -1;
 	}
-	if (p_uspl->index != NULL) {
-		free(p_uspl->index);
+	if (p_uspl->start != NULL) {
+		free(p_uspl->start);
+	}
+	if (p_uspl->end != NULL) {
+		free(p_uspl->end);
 	}
 	return 0;
 }
