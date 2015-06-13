@@ -4,6 +4,7 @@
 #include "ucharLib.h"
 #include "yajl/yajl_parse.h"
 #include "yajl/yajl_gen.h"
+#include "yajl/yajl_tree.h"
 
 #define TYPE_COUNT 4
 #define BUF_SIZE 10000
@@ -76,7 +77,7 @@ int rehash_hash_vector(struct hash_vector * p_hv, size_t hashlen);
 int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, Parser f, Checker cf);
 
 // Insert the us, count, next as a struct ustring_analysis into p_hv
-int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, long long count, struct ustring_analysis * next);
+static int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, long long count, struct ustring_analysis * next);
 
 int add_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
 int sub_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
