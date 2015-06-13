@@ -2,6 +2,8 @@
 #define UTF8TEXT
 
 #include "ucharLib.h"
+#include "yajl/yajl_parse.h"
+#include "yajl/yajl_gen.h"
 
 #define TYPE_COUNT 4
 #define BUF_SIZE 10000
