@@ -486,3 +486,11 @@ void output_hash_vector(FILE * out, const struct hash_vector * p_hv) {
 	}
 	fprintf_s(out, "\n");
 }
+
+int save_vector(uchar filename[], const struct hash_vector * p_hv) {
+	return 0;
+}
+
+int load_vector(uchar filename[], struct hash_vector * p_hv) {
+	return 0;
+}

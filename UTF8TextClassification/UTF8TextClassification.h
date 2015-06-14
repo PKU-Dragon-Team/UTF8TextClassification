@@ -2,9 +2,8 @@
 #define UTF8TEXT
 
 #include "ucharLib.h"
-#include "yajl/yajl_parse.h"
-#include "yajl/yajl_gen.h"
-#include "yajl/yajl_tree.h"
+#include <yajl/yajl_parse.h>
+#include <yajl/yajl_gen.h>
 
 #define TYPE_COUNT 4
 #define BUF_SIZE 10000
@@ -91,5 +90,8 @@ int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, Che
 int clear_uspl(struct ustring_parse_list * p_uspl);
 
 void output_hash_vector(FILE * out, const struct hash_vector * p_hv);
+
+int save_vector(uchar filename[], const struct hash_vector * p_hv);
+int load_vector(uchar filename[], struct hash_vector * p_hv);
 
 #endif

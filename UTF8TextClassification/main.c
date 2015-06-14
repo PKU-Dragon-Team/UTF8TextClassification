@@ -14,9 +14,6 @@ int main(int arc, char * argv[]) {
 	FILE * out;
 	fopen_s(&in, "in.txt", "r");
 	fopen_s(&out, "out.txt", "w");
-	// yajl JSON
-	size_t rd;
-	yajl_val node;
 
 	struct text_list * tl = NULL;
 	init_text_list(&tl, NULL, 0);
