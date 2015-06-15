@@ -249,16 +249,13 @@ int rehash_hash_vector(struct hash_vector * p_hv, size_t hashlen) {
 	return 0;
 }
 
-int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, const Parser f, const Checker cf) {
-	if (p_hv == NULL || cp_us == NULL || f == NULL) {
+int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, const Parser pf, const Checker cf) {
+	if (p_hv == NULL || cp_us == NULL || pf == NULL) {
 		return -1;
 	}
 
-	struct ustring_parse_list * p_uspl = malloc(sizeof(struct ustring_parse_list));
-	if (p_uspl == NULL) {
-		return -1;
-	}
-	f(p_uspl, cp_us, cf);
+	struct ustring_parse_list * p_uspl;
+	init_uspl(&p_uspl, cp_us, pf, cf);
 
 	for (size_t i = 0; i + 1 <= p_uspl->len; ++i) {
 		// check if hash-map is overload
@@ -413,16 +410,16 @@ int clear_hash_vector(struct hash_vector ** pp_hv) {
 	return 0;
 }
 
-int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, const Checker f) {
+int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, const Checker cf) {
 	if (p == NULL || cp_us == NULL) {
 		return -1;
 	}
 	Checker func;
-	if (f == NULL) {
+	if (cf == NULL) {
 		func = is_blank;
 	}
 	else {
-		func = f;
+		func = cf;
 	}
 
 	p->start = calloc(cp_us->index_len + 1, sizeof(size_t));
@@ -467,8 +464,8 @@ int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, co
 	return 0;
 }
 
-int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, const Checker f) {
-	if (p == NULL || cp_us == NULL || f == NULL) {
+int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, const Checker cf) {
+	if (p == NULL || cp_us == NULL || cf == NULL) {
 		return -1;
 	}
 	p->start = calloc(cp_us->index_len + 1, sizeof(size_t));
@@ -479,7 +476,7 @@ int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, con
 
 	size_t j = 0;
 	for (size_t i = 0; i < cp_us->index_len; ++i) {
-		if (f(&cp_us->string[cp_us->index[i]])) {
+		if (cf(&cp_us->string[cp_us->index[i]])) {
 			continue;
 		}
 		p->start[j] = i;
@@ -490,19 +487,34 @@ int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, con
 	return 0;
 }
 
-int clear_uspl(struct ustring_parse_list ** p_uspl) {
-	if (p_uspl == NULL) {
+int init_uspl(struct ustring_parse_list ** pp_uspl, const struct ustring * cp_us, Parser pf, Checker cf) {
+	if (pp_uspl == NULL) {
 		return -1;
 	}
-	if (*p_uspl != NULL) {
-		if ((*p_uspl)->start != NULL) {
-			free((*p_uspl)->start);
+	*pp_uspl = malloc(sizeof(struct ustring_parse_list));
+	if (*pp_uspl == NULL) {
+		return -1;
+	}
+	(*pp_uspl)->len = 0;
+	(*pp_uspl)->start = NULL;
+	(*pp_uspl)->end = NULL;
+	pf(*pp_uspl, cp_us, cf);
+	return 0;
+}
+
+int clear_uspl(struct ustring_parse_list ** pp_uspl) {
+	if (pp_uspl == NULL) {
+		return -1;
+	}
+	if (*pp_uspl != NULL) {
+		if ((*pp_uspl)->start != NULL) {
+			free((*pp_uspl)->start);
 		}
-		if ((*p_uspl)->end != NULL) {
-			free((*p_uspl)->end);
+		if ((*pp_uspl)->end != NULL) {
+			free((*pp_uspl)->end);
 		}
-		free(*p_uspl);
-		*p_uspl = NULL;
+		free(*pp_uspl);
+		*pp_uspl = NULL;
 	}
 	return 0;
 }
