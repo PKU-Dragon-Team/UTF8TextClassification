@@ -149,7 +149,7 @@ int parse_type(const uchar a_type[], int8_t types[TYPE_COUNT]) {
 
 	size_t n = strlen(a_type);
 	int ti = 0;
-	for (int i = 0; i < n; ++i) {
+	for (size_t i = 0; i < n; ++i) {
 		if (ti < TYPE_COUNT && a_type[i] != '*' && a_type[i] != '(' && a_type[i] != ')' && a_type[i] != '\n') {
 			types[ti] = a_type[i] - '0';
 			++ti;
@@ -249,7 +249,7 @@ int rehash_hash_vector(struct hash_vector * p_hv, size_t hashlen) {
 	return 0;
 }
 
-int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, Parser f, Checker cf) {
+int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, const Parser f, const Checker cf) {
 	if (p_hv == NULL || cp_us == NULL || f == NULL) {
 		return -1;
 	}
@@ -407,12 +407,16 @@ int clear_hash_vector(struct hash_vector ** pp_hv) {
 	return 0;
 }
 
-int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, Checker f) {
+int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, const Checker f) {
 	if (p == NULL || cp_us == NULL) {
 		return -1;
 	}
+	Checker func;
 	if (f == NULL) {
-		f = is_blank;
+		func = is_blank;
+	}
+	else {
+		func = f;
 	}
 
 	p->start = calloc(cp_us->index_len + 1, sizeof(size_t));
@@ -421,7 +425,7 @@ int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, Ch
 	size_t j = 0;
 	bool inword = false;
 	for (size_t i = 0; i <= cp_us->index_len; ++i) {
-		if (f(&cp_us->string[cp_us->index[i]])) {
+		if (func(&cp_us->string[cp_us->index[i]])) {
 			if (inword) {
 				p->end[j] = i;
 				++j;
@@ -442,8 +446,8 @@ int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, Ch
 	return 0;
 }
 
-int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, Checker f) {
-	if (p == NULL || cp_us == NULL) {
+int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, const Checker f) {
+	if (p == NULL || cp_us == NULL || f == NULL) {
 		return -1;
 	}
 	p->start = calloc(cp_us->index_len + 1, sizeof(size_t));
@@ -487,10 +491,29 @@ void output_hash_vector(FILE * out, const struct hash_vector * p_hv) {
 	fprintf_s(out, "\n");
 }
 
-int save_vector(uchar filename[], const struct hash_vector * p_hv) {
+int save_vector(FILE * out, const struct hash_vector * p_hv) {
+	if (out == NULL) {
+		return -1;
+	}
+	// TODO: design a binary structure
+
+	//fprintf_s(out, "%d\n%d\n%d\n", p_hv->total_count, p_hv->hashlen, p_hv->count);
+
+	// traverse the hashmap
+	for (size_t i = 0; i < p_hv->hashlen; ++i) {
+		struct ustring_analysis * p = p_hv->usa_list[i];
+		while (p != NULL) {
+			//fprintf_s(out, "%s\t%d\n", p->us->string, p->count);
+			p = p->next;
+		}
+	}
+
 	return 0;
 }
 
-int load_vector(uchar filename[], struct hash_vector * p_hv) {
+int load_vector(FILE * out, struct hash_vector * p_hv) {
+	if (out == NULL) {
+		return -1;
+	}
 	return 0;
 }
