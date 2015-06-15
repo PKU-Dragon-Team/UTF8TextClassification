@@ -14,19 +14,32 @@ int main(int arc, char * argv[]) {
 	FILE * out;
 	fopen_s(&in, "in.txt", "r");
 	fopen_s(&out, "out.txt", "w");
+	if (in == NULL || out == NULL) {
+		return -1;
+	}
 
 	struct text_list * tl = NULL;
 	init_text_list(&tl, NULL, 0);
+	// TODO: the input file is too big, and the memory usage is too high, should use incremental method
+
 	load_texts(in, tl);
 	output_texts(out, tl);
 
 	FILE * out2;
 	fopen_s(&out2, "out2.txt", "w");
+	if (out2 == NULL) {
+		return -1;
+	}
+
 	get_char_analysis(tl, &uca);
 	output_char_analysis(out2, &uca);
 
 	FILE * out3;
 	fopen_s(&out3, "out3.txt", "w");
+	if (out3 == NULL) {
+		return -1;
+	}
+
 	for (size_t i = 0; i < tl->len; ++i) {
 		struct hash_vector * temp = malloc(sizeof(struct hash_vector));
 		init_hash_vector(&temp);

@@ -164,7 +164,7 @@ int output_texts(FILE * out, const struct text_list * p_tlist) {
 	}
 
 	for (size_t i = 0; i < p_tlist->len; ++i) {
-		fprintf_s(out, "***%d\n%s***(", i + 1, p_tlist->list[i].us->string, p_tlist->list[i].us->string_len);
+		fprintf_s(out, "***%llu\n%s***(", i + 1, p_tlist->list[i].us->string);
 		for (int j = 0; j < TYPE_COUNT; ++j) {
 			if (p_tlist->list[i].types[j] != -1) {
 				fprintf_s(out, "%d", p_tlist->list[i].types[j]);
@@ -194,10 +194,10 @@ int output_char_analysis(FILE * out, const struct uchar_analysis * uca) {
 		return -1;
 	}
 
-	fprintf_s(out, "Total Characters: %d\n", uca->total_count);
+	fprintf_s(out, "Total Characters: %llu\n", uca->total_count);
 	for (int i = 0; i < MAX_UNICODE; ++i) {
 		if (uca->uchar_list[i] != 0) {
-			fprintf_s(out, "0x%02X\t%5d\n", i, uca->uchar_list[i]);
+			fprintf_s(out, "0x%02X\t%5lld\n", i, uca->uchar_list[i]);
 		}
 	}
 	return 0;
@@ -255,6 +255,9 @@ int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, 
 	}
 
 	struct ustring_parse_list * p_uspl = malloc(sizeof(struct ustring_parse_list));
+	if (p_uspl == NULL) {
+		return -1;
+	}
 	f(p_uspl, cp_us, cf);
 
 	for (size_t i = 0; i + 1 <= p_uspl->len; ++i) {
@@ -268,7 +271,7 @@ int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, 
 		slice_ustring(cp_us, temp, p_uspl->start[i], p_uspl->end[i]);
 		insert_hash_vector(p_hv, temp, 1, NULL);
 	}
-	clear_uspl(p_uspl);
+	clear_uspl(&p_uspl);
 	return 0;
 }
 
@@ -278,6 +281,9 @@ int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, lon
 	}
 
 	struct ustring_analysis * p_ua = malloc(sizeof(struct ustring_analysis));
+	if (p_ua == NULL) {
+		return -1;
+	}
 	struct ustring * temp;
 	init_ustring(&temp, index, NULL, 0);
 	clone_ustring(us, temp);
@@ -421,6 +427,9 @@ int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, co
 
 	p->start = calloc(cp_us->index_len + 1, sizeof(size_t));
 	p->end = calloc(cp_us->index_len + 1, sizeof(size_t));
+	if (p->start == NULL || p->end == NULL) {
+		return -1;
+	}
 
 	size_t j = 0;
 	bool inword = false;
@@ -439,8 +448,20 @@ int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, co
 			}
 		}
 	}
-	p->start = realloc(p->start, j * sizeof(size_t));
-	p->end = realloc(p->end, j * sizeof(size_t));
+	{
+		size_t * temp = realloc(p->start, j * sizeof(size_t));
+		if (temp == NULL) {
+			return -1;
+		}
+		p->start = temp;
+	}
+	{
+		size_t * temp = realloc(p->end, j * sizeof(size_t));
+		if (temp == NULL) {
+			return -1;
+		}
+		p->end = temp;
+	}
 	p->len = j;
 
 	return 0;
@@ -452,6 +473,9 @@ int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, con
 	}
 	p->start = calloc(cp_us->index_len + 1, sizeof(size_t));
 	p->end = calloc(cp_us->index_len + 1, sizeof(size_t));
+	if (p->start == NULL || p->end == NULL) {
+		return -1;
+	}
 
 	size_t j = 0;
 	for (size_t i = 0; i < cp_us->index_len; ++i) {
@@ -466,25 +490,29 @@ int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, con
 	return 0;
 }
 
-int clear_uspl(struct ustring_parse_list * p_uspl) {
+int clear_uspl(struct ustring_parse_list ** p_uspl) {
 	if (p_uspl == NULL) {
 		return -1;
 	}
-	if (p_uspl->start != NULL) {
-		free(p_uspl->start);
-	}
-	if (p_uspl->end != NULL) {
-		free(p_uspl->end);
+	if (*p_uspl != NULL) {
+		if ((*p_uspl)->start != NULL) {
+			free((*p_uspl)->start);
+		}
+		if ((*p_uspl)->end != NULL) {
+			free((*p_uspl)->end);
+		}
+		free(*p_uspl);
+		*p_uspl = NULL;
 	}
 	return 0;
 }
 
 void output_hash_vector(FILE * out, const struct hash_vector * p_hv) {
-	fprintf_s(out, "count: %d\ttotal_count: %d\thashlen: %d\n", p_hv->count, p_hv->total_count, p_hv->hashlen);
+	fprintf_s(out, "count: %llu\ttotal_count: %llu\thashlen: %llu\n", p_hv->count, p_hv->total_count, p_hv->hashlen);
 	for (size_t i = 0; i < p_hv->hashlen; ++i) {
 		struct ustring_analysis * p = p_hv->usa_list[i];
 		while (p != NULL) {
-			fprintf_s(out, "%s:%d\t", p->us->string, p->count);
+			fprintf_s(out, "%s:%llu\t", p->us->string, p->count);
 			p = p->next;
 		}
 	}

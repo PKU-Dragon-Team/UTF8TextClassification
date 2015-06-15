@@ -85,7 +85,7 @@ int clear_hash_vector(struct hash_vector ** pp_hv);
 
 int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, const Checker f);
 int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, const Checker f);
-int clear_uspl(struct ustring_parse_list * p_uspl);
+int clear_uspl(struct ustring_parse_list ** p_uspl);
 
 void output_hash_vector(FILE * out, const struct hash_vector * p_hv);
 
