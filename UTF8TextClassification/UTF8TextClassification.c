@@ -535,25 +535,57 @@ int save_vector(FILE * out, const struct hash_vector * p_hv) {
 	if (out == NULL) {
 		return -1;
 	}
-	// TODO: design a binary structure
 
-	//fprintf_s(out, "%d\n%d\n%d\n", p_hv->total_count, p_hv->hashlen, p_hv->count);
+	fwrite(&p_hv->total_count, sizeof(unsigned long long), 1, out);
+	fwrite(&p_hv->hashlen, sizeof(size_t), 1, out);
+	fwrite(&p_hv->count, sizeof(size_t), 1, out);
 
 	// traverse the hashmap
 	for (size_t i = 0; i < p_hv->hashlen; ++i) {
 		struct ustring_analysis * p = p_hv->usa_list[i];
 		while (p != NULL) {
-			//fprintf_s(out, "%s\t%d\n", p->us->string, p->count);
+			fwrite(&p->count, sizeof(long long), 1, out);
+			fwrite(&p->us->string_len, sizeof(size_t), 1, out);
+			fwrite(p->us->string, sizeof(uchar), p->us->string_len, out);
 			p = p->next;
 		}
 	}
-
 	return 0;
 }
 
-int load_vector(FILE * out, struct hash_vector * p_hv) {
-	if (out == NULL) {
+int load_vector(FILE * in, struct hash_vector * p_hv) {
+	if (in == NULL) {
 		return -1;
+	}
+
+	fread(&p_hv->total_count, sizeof(unsigned long long), 1, in);
+	fread(&p_hv->hashlen, sizeof(size_t), 1, in);
+	fread(&p_hv->count, sizeof(size_t), 1, in);
+	p_hv->usa_list = calloc(p_hv->hashlen, sizeof(struct ustring_analysis *));
+	if (p_hv->usa_list == NULL) {
+		return -1;
+	}
+
+	for (size_t i = 0; i < p_hv->count; ++i) {
+		struct ustring_analysis * p = malloc(sizeof(struct ustring_analysis));
+		if (p == NULL) {
+			return -1;
+		}
+		fread(&p->count, sizeof(long long), 1, in);
+
+		size_t string_len;
+		fread(&string_len, sizeof(size_t), 1, in);
+		uchar *s = calloc(string_len + 1, sizeof(uchar));
+		if (s == NULL) {
+			return -1;
+		}
+		fread(s, sizeof(uchar), string_len, in);
+		s[string_len] = '\0';
+		struct ustring *us = NULL;
+		init_ustring(&us, index, s, string_len);
+		p->us = us;
+
+		insert_usa_list(p_hv->usa_list, p, hash_ustring(us, 0, p_hv->hashlen));
 	}
 	return 0;
 }

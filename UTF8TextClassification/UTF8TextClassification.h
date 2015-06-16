@@ -92,6 +92,6 @@ int clear_uspl(struct ustring_parse_list ** pp_uspl);
 void output_hash_vector(FILE * out, const struct hash_vector * p_hv);
 
 int save_vector(FILE * out, const struct hash_vector * p_hv);
-int load_vector(FILE * out, struct hash_vector * p_hv);
+int load_vector(FILE * in, struct hash_vector * p_hv);
 
 #endif
