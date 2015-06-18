@@ -110,6 +110,15 @@ int load_texts(FILE * in, struct text_list * p_tlist) {
 		return -1;
 	}
 	else {
+		enum {
+			init,
+			first,
+			text,
+			type,
+			error
+		} state = init;
+		// TODO: change this function into a state machine
+
 		uchar s[BUF_SIZE] = { 0 };
 		size_t i = 0;
 
