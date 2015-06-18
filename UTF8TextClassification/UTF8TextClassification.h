@@ -2,6 +2,7 @@
 #define UTF8TEXT
 
 #include "ucharLib.h"
+#include <ctype.h>
 
 #define TYPE_COUNT 4
 #define BUF_SIZE 10000
@@ -19,44 +20,43 @@ struct text {
 
 struct text_list {
 	struct text * list;
-	size_t len;
+	llu len;
 };
 
 struct uchar_analysis {
-	size_t total_count;
-	long long uchar_list[MAX_UNICODE];
+	llu total_count;
+	lld uchar_list[MAX_UNICODE];
 };
 
 struct ustring_analysis {
 	struct ustring * us;
-	long long count;
+	lld count;
 	struct ustring_analysis * next;
 };
 
 struct hash_vector {
-	unsigned long long total_count;
+	llu total_count;
 	struct ustring_analysis ** usa_list;
-	size_t hashlen;
-	size_t count;
+	llu hashlen;
+	llu count;
 };
 
 struct ustring_parse_list {
-	size_t * start;
-	size_t * end;
-	size_t len;
+	llu * start;
+	llu * end;
+	llu len;
 };
 
-// Incert p_usa to the hashcode position of ap_usa
-static void insert_usa_list(struct ustring_analysis * ap_usa[], struct ustring_analysis * p_usa, size_t hashcode);
 
-// Check if uc is blank
+static void insert_usa_list(struct ustring_analysis * ap_usa[], struct ustring_analysis * p_usa, llu hashcode);
 static bool is_blank(const uchar uc[]);
+static void free_if_not_null(void * p);
 
 int init_text(struct text ** pp_text, struct ustring * us, int8_t types[TYPE_COUNT]);
 int clear_text(struct text ** pp_text);
 
-int init_text_list(struct text_list ** pp_tlist, const struct text a_text[], size_t len);
-int resize_text_list(struct text_list * p_tlist, size_t len);
+int init_text_list(struct text_list ** pp_tlist, const struct text a_text[], llu len);
+int resize_text_list(struct text_list * p_tlist, llu len);
 int clear_text_list(struct text_list ** pp_tlist);
 
 int load_texts(FILE * in, struct text_list * p_tlist);
@@ -67,18 +67,18 @@ int get_char_analysis(const struct text_list * cp_tlist, struct uchar_analysis *
 int output_char_analysis(FILE * out, const struct uchar_analysis * uca);
 
 int init_hash_vector(struct hash_vector ** pp_hv);
-int rehash_hash_vector(struct hash_vector * p_hv, size_t hashlen);
+int rehash_hash_vector(struct hash_vector * p_hv, llu hashlen);
 
 // Parse cp_us with pf and use the result to build the p_hv
 int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, const struct ustring_parse_list * p_uspl);
 
 // Insert the us, count, next as a struct ustring_analysis into p_hv
-static int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, long long count, struct ustring_analysis * next);
+static int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, lld count, struct ustring_analysis * next);
 
 int add_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
 int sub_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
-long long product_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
-unsigned long long len2_hash_vector(const struct hash_vector * p_hv);
+lld product_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
+llu len2_hash_vector(const struct hash_vector * p_hv);
 
 int clear_hash_vector(struct hash_vector ** pp_hv);
 

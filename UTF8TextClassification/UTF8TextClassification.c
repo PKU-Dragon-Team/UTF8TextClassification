@@ -1,6 +1,6 @@
 #include "UTF8TextClassification.h"
 
-static void insert_usa_list(struct ustring_analysis * ap_usa[], struct ustring_analysis * p_usa, size_t hashcode) {
+static void insert_usa_list(struct ustring_analysis * ap_usa[], struct ustring_analysis * p_usa, llu hashcode) {
 	if (ap_usa[hashcode] == NULL) {
 		ap_usa[hashcode] = p_usa;
 	}
@@ -15,6 +15,12 @@ static void insert_usa_list(struct ustring_analysis * ap_usa[], struct ustring_a
 
 static bool is_blank(const uchar uc[]) {
 	return *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ';
+}
+
+static void free_if_not_null(void * p) {
+	if (p != NULL) {
+		free(p);
+	}
 }
 
 int init_text(struct text ** pp_text, struct ustring * us, int8_t types[TYPE_COUNT]) {
@@ -44,12 +50,13 @@ int clear_text(struct text ** pp_text) {
 		if ((*pp_text)->us != NULL) {
 			clear_ustring(&(*pp_text)->us);
 		}
+		free(*pp_text);
 		*pp_text = NULL;
 	}
 	return 0;
 }
 
-int init_text_list(struct text_list ** pp_tlist, const struct text a_text[], size_t len) {
+int init_text_list(struct text_list ** pp_tlist, const struct text a_text[], llu len) {
 	if (pp_tlist == NULL) {
 		return -1;
 	}
@@ -75,7 +82,7 @@ int init_text_list(struct text_list ** pp_tlist, const struct text a_text[], siz
 	return 0;
 }
 
-int resize_text_list(struct text_list * p_tlist, size_t len) {
+int resize_text_list(struct text_list * p_tlist, llu len) {
 	if (p_tlist == NULL) {
 		return -1;
 	}
@@ -95,7 +102,7 @@ int clear_text_list(struct text_list ** pp_tlist) {
 	if (pp_tlist == NULL) {
 		return -1;
 	}
-	for (size_t i = 0; i < (*pp_tlist)->len; ++i) {
+	for (llu i = 0; i < (*pp_tlist)->len; ++i) {
 		clear_ustring(&(*pp_tlist)->list[i].us);
 	}
 	free((*pp_tlist)->list);
@@ -115,39 +122,104 @@ int load_texts(FILE * in, struct text_list * p_tlist) {
 			first,
 			text,
 			type,
-			error
+			error,
+			error_end
 		} state = init;
 		// TODO: change this function into a state machine
 
 		uchar s[BUF_SIZE] = { 0 };
-		size_t i = 0;
+		int8_t types[TYPE_COUNT] = { 0 };
+		struct ustring * us = NULL;
+		llu i = 0;
+		llu line = 0;
 
-		while (fgets(s, BUF_SIZE, in)) {	// the first line
-			fgets(s, BUF_SIZE, in);		// the second line
-			struct ustring * us = NULL;
-			init_ustring(&us, index, s, BUF_SIZE);
-
-			fgets(s, BUF_SIZE, in);		// the third line
-			while (s[0] != '*') {
-				struct ustring * temp = NULL;
-				init_ustring(&temp, index, s, BUF_SIZE);
-				cat_ustring(temp, us);
-				clear_ustring(&temp);
-				fgets(s, BUF_SIZE, in);
-			}
-			int8_t types[TYPE_COUNT] = { 0 };
-			parse_type(s, types);
-
-			struct text * t = NULL;
-			init_text(&t, us, types);
-
-			if (i >= p_tlist->len) {	// Dynamic Expand
-				if (resize_text_list(p_tlist, p_tlist->len * 2 + 1) != 0) {
-					return -1;
+		while (state != error_end && fgets(s, BUF_SIZE, in)) {
+			switch (state) {
+			case init:
+				if (strnlen(s, BUF_SIZE) < 4 || !isdigit(s[3])) {
+					state = error;
 				}
+				else {
+					state = first;
+				}
+				break;
+			case first:
+				if (s[0] == '*') {
+					state = error;
+				}
+				else {
+					init_ustring(&us, index, s, BUF_SIZE);
+					state = text;
+				}
+				break;
+			case text:
+				if (s[0] == '*') {
+					if (strnlen(s, BUF_SIZE) < 5 || s[3] != '(') {
+						state = error;
+					}
+					else {
+						parse_type(s, types);
+						state = type;
+					}
+				}
+				else {
+					struct ustring * temp = NULL;
+					init_ustring(&temp, index, s, BUF_SIZE);
+					cat_ustring(temp, us);
+					clear_ustring(&temp);
+				}
+				break;
+			case type:
+				if (s[0] != '*') {
+					state = error;
+				}
+				else {
+					struct text * t = NULL;
+					init_text(&t, us, types);
+					if (i >= p_tlist->len) {	// Dynamic Expand
+						if (resize_text_list(p_tlist, p_tlist->len * 2 + 1) != 0) {
+							return -1;
+						}
+					}
+					p_tlist->list[i] = *t;
+					++i;
+					clear_ustring(&us);
+					state = first;
+				}
+				break;
+			case error:
+				printf("Load error at line %llu, %llu texts have been read.\n", line, i);
+				return -1;
+				break;
+			default:
+				break;
 			}
-			p_tlist->list[i] = *t;
-			++i;
+			++line;
+			//fgets(s, BUF_SIZE, in);		// the second line
+			//struct ustring * us = NULL;
+			//init_ustring(&us, index, s, BUF_SIZE);
+
+			//fgets(s, BUF_SIZE, in);		// the third line
+			//while (s[0] != '*') {
+			//	struct ustring * temp = NULL;
+			//	init_ustring(&temp, index, s, BUF_SIZE);
+			//	cat_ustring(temp, us);
+			//	clear_ustring(&temp);
+			//	fgets(s, BUF_SIZE, in);
+			//}
+			//int8_t types[TYPE_COUNT] = { 0 };
+			//parse_type(s, types);
+
+			//struct text * t = NULL;
+			//init_text(&t, us, types);
+
+			//if (i >= p_tlist->len) {	// Dynamic Expand
+			//	if (resize_text_list(p_tlist, p_tlist->len * 2 + 1) != 0) {
+			//		return -1;
+			//	}
+			//}
+			//p_tlist->list[i] = *t;
+			//++i;
 		}
 		resize_text_list(p_tlist, p_tlist->len + 1);
 		p_tlist->len = i;
@@ -164,9 +236,9 @@ int parse_type(const uchar a_type[], int8_t types[TYPE_COUNT]) {
 		types[i] = -1;
 	}
 
-	size_t n = strlen(a_type);
+	llu n = strlen(a_type);
 	int ti = 0;
-	for (size_t i = 0; i < n; ++i) {
+	for (llu i = 0; i < n; ++i) {
 		if (ti < TYPE_COUNT && a_type[i] != '*' && a_type[i] != '(' && a_type[i] != ')' && a_type[i] != '\n') {
 			types[ti] = a_type[i] - '0';
 			++ti;
@@ -180,7 +252,7 @@ int output_texts(FILE * out, const struct text_list * p_tlist) {
 		return -1;
 	}
 
-	for (size_t i = 0; i < p_tlist->len; ++i) {
+	for (llu i = 0; i < p_tlist->len; ++i) {
 		fprintf_s(out, "***%llu\n%s***(", i + 1, p_tlist->list[i].us->string);
 		for (int j = 0; j < TYPE_COUNT; ++j) {
 			if (p_tlist->list[i].types[j] != -1) {
@@ -197,8 +269,8 @@ int get_char_analysis(const struct text_list * cp_tlist, struct uchar_analysis *
 		return -1;
 	}
 
-	for (size_t i = 0; i < cp_tlist->len; ++i) {
-		for (size_t j = 0; j < cp_tlist->list[i].us->string_len; ++j) {
+	for (llu i = 0; i < cp_tlist->len; ++i) {
+		for (llu j = 0; j < cp_tlist->list[i].us->string_len; ++j) {
 			++uca->uchar_list[cp_tlist->list[i].us->string[j]];
 			++uca->total_count;
 		}
@@ -241,7 +313,7 @@ int init_hash_vector(struct hash_vector ** pp_hv) {
 	return 0;
 }
 
-int rehash_hash_vector(struct hash_vector * p_hv, size_t hashlen) {
+int rehash_hash_vector(struct hash_vector * p_hv, llu hashlen) {
 	if (p_hv == NULL) {
 		return -1;
 	}
@@ -251,7 +323,7 @@ int rehash_hash_vector(struct hash_vector * p_hv, size_t hashlen) {
 		return -1;
 	}
 
-	for (size_t i = 0; i < p_hv->hashlen; ++i) {
+	for (llu i = 0; i < p_hv->hashlen; ++i) {
 		struct ustring_analysis * p = p_hv->usa_list[i];
 		while (p != NULL) {
 			insert_usa_list(temp, p, hash_ustring(p->us, HASH_SEED, hashlen));
@@ -271,7 +343,7 @@ int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, 
 		return -1;
 	}
 
-	for (size_t i = 0; i + 1 <= p_uspl->len; ++i) {
+	for (llu i = 0; i + 1 <= p_uspl->len; ++i) {
 		// check if hash-map is overload
 		if (p_hv->count * 2 > p_hv->hashlen) {
 			rehash_hash_vector(p_hv, p_hv->hashlen * 2 + 1);
@@ -285,7 +357,7 @@ int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, 
 	return 0;
 }
 
-int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, long long count, struct ustring_analysis * next) {
+int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, lld count, struct ustring_analysis * next) {
 	if (p_hv == NULL) {
 		return -1;
 	}
@@ -302,7 +374,7 @@ int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, lon
 	p_ua->count = count;
 	p_ua->next = next;
 
-	size_t hashcode = hash_ustring(us, HASH_SEED, p_hv->hashlen);
+	llu hashcode = hash_ustring(us, HASH_SEED, p_hv->hashlen);
 	// search for existence
 	struct ustring_analysis * p = p_hv->usa_list[hashcode];
 	if (p != NULL) {
@@ -340,7 +412,7 @@ int add_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2
 		return -1;
 	}
 
-	for (size_t i = 0; i < p_hv2->hashlen; ++i) {
+	for (llu i = 0; i < p_hv2->hashlen; ++i) {
 		struct ustring_analysis * p = p_hv2->usa_list[i];
 
 		while (p != NULL) {
@@ -356,7 +428,7 @@ int sub_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2
 		return -1;
 	}
 
-	for (size_t i = 0; i < p_hv2->hashlen; ++i) {
+	for (llu i = 0; i < p_hv2->hashlen; ++i) {
 		struct ustring_analysis * p = p_hv2->usa_list[i];
 
 		while (p != NULL) {
@@ -367,10 +439,10 @@ int sub_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2
 	return 0;
 }
 
-long long product_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * p_hv2) {
-	long long product = 0;
+lld product_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * p_hv2) {
+	lld product = 0;
 
-	for (size_t i = 0; i < p_hv1->hashlen; ++i) {
+	for (llu i = 0; i < p_hv1->hashlen; ++i) {
 		struct ustring_analysis * p = p_hv1->usa_list[i];
 		struct ustring_analysis * q;
 		if (p_hv1->hashlen == p_hv2->hashlen) {
@@ -393,10 +465,10 @@ long long product_hash_vector(const struct hash_vector * p_hv1, const struct has
 	return product;
 }
 
-unsigned long long len2_hash_vector(const struct hash_vector * p_hv) {
-	unsigned long long len2 = 0;
+llu len2_hash_vector(const struct hash_vector * p_hv) {
+	llu len2 = 0;
 
-	for (size_t i = 0; i < p_hv->hashlen; ++i) {
+	for (llu i = 0; i < p_hv->hashlen; ++i) {
 		struct ustring_analysis * p = p_hv->usa_list[i];
 		while (p != NULL) {
 			len2 += p->count * p->count;
@@ -411,7 +483,7 @@ int clear_hash_vector(struct hash_vector ** pp_hv) {
 		return -1;
 	}
 
-	for (size_t i = 0; i < (*pp_hv)->hashlen; ++i) {
+	for (llu i = 0; i < (*pp_hv)->hashlen; ++i) {
 		struct ustring_analysis * p = (*pp_hv)->usa_list[i];
 		while (p != NULL) {
 			clear_ustring(&p->us);
@@ -435,15 +507,15 @@ int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, co
 		func = cf;
 	}
 
-	p->start = calloc(cp_us->index_len + 1, sizeof(size_t));
-	p->end = calloc(cp_us->index_len + 1, sizeof(size_t));
+	p->start = calloc(cp_us->index_len + 1, sizeof(llu));
+	p->end = calloc(cp_us->index_len + 1, sizeof(llu));
 	if (p->start == NULL || p->end == NULL) {
 		return -1;
 	}
 
-	size_t j = 0;
+	llu j = 0;
 	bool inword = false;
-	for (size_t i = 0; i <= cp_us->index_len; ++i) {
+	for (llu i = 0; i <= cp_us->index_len; ++i) {
 		if (func(&cp_us->string[cp_us->index[i]])) {
 			if (inword) {
 				p->end[j] = i;
@@ -459,14 +531,14 @@ int commonParser(struct ustring_parse_list * p, const struct ustring * cp_us, co
 		}
 	}
 	{
-		size_t * temp = realloc(p->start, j * sizeof(size_t));
+		llu * temp = realloc(p->start, j * sizeof(llu));
 		if (temp == NULL) {
 			return -1;
 		}
 		p->start = temp;
 	}
 	{
-		size_t * temp = realloc(p->end, j * sizeof(size_t));
+		llu * temp = realloc(p->end, j * sizeof(llu));
 		if (temp == NULL) {
 			return -1;
 		}
@@ -481,14 +553,14 @@ int ucharParser(struct ustring_parse_list * p, const struct ustring * cp_us, con
 	if (p == NULL || cp_us == NULL || cf == NULL) {
 		return -1;
 	}
-	p->start = calloc(cp_us->index_len + 1, sizeof(size_t));
-	p->end = calloc(cp_us->index_len + 1, sizeof(size_t));
+	p->start = calloc(cp_us->index_len + 1, sizeof(llu));
+	p->end = calloc(cp_us->index_len + 1, sizeof(llu));
 	if (p->start == NULL || p->end == NULL) {
 		return -1;
 	}
 
-	size_t j = 0;
-	for (size_t i = 0; i < cp_us->index_len; ++i) {
+	llu j = 0;
+	for (llu i = 0; i < cp_us->index_len; ++i) {
 		if (cf(&cp_us->string[cp_us->index[i]])) {
 			continue;
 		}
@@ -519,12 +591,8 @@ int clear_uspl(struct ustring_parse_list ** pp_uspl) {
 		return -1;
 	}
 	if (*pp_uspl != NULL) {
-		if ((*pp_uspl)->start != NULL) {
-			free((*pp_uspl)->start);
-		}
-		if ((*pp_uspl)->end != NULL) {
-			free((*pp_uspl)->end);
-		}
+		free_if_not_null((*pp_uspl)->start);
+		free_if_not_null((*pp_uspl)->end);
 		free(*pp_uspl);
 		*pp_uspl = NULL;
 	}
@@ -533,7 +601,7 @@ int clear_uspl(struct ustring_parse_list ** pp_uspl) {
 
 void output_hash_vector(FILE * out, const struct hash_vector * p_hv) {
 	fprintf_s(out, "count\t%llu\ntotal_count\t%llu\nhashlen\t%llu\n", p_hv->count, p_hv->total_count, p_hv->hashlen);
-	for (size_t i = 0; i < p_hv->hashlen; ++i) {
+	for (llu i = 0; i < p_hv->hashlen; ++i) {
 		struct ustring_analysis * p = p_hv->usa_list[i];
 		while (p != NULL) {
 			fprintf_s(out, "%s\t%lld\n", p->us->string, p->count);
@@ -547,16 +615,16 @@ int save_vector(FILE * out, const struct hash_vector * p_hv) {
 		return -1;
 	}
 
-	fwrite(&p_hv->total_count, sizeof(unsigned long long), 1, out);
-	fwrite(&p_hv->hashlen, sizeof(size_t), 1, out);
-	fwrite(&p_hv->count, sizeof(size_t), 1, out);
+	fwrite(&p_hv->total_count, sizeof(llu), 1, out);
+	fwrite(&p_hv->hashlen, sizeof(llu), 1, out);
+	fwrite(&p_hv->count, sizeof(llu), 1, out);
 
 	// traverse the hashmap
-	for (size_t i = 0; i < p_hv->hashlen; ++i) {
+	for (llu i = 0; i < p_hv->hashlen; ++i) {
 		struct ustring_analysis * p = p_hv->usa_list[i];
 		while (p != NULL) {
-			fwrite(&p->count, sizeof(long long), 1, out);
-			fwrite(&p->us->string_len, sizeof(size_t), 1, out);
+			fwrite(&p->count, sizeof(lld), 1, out);
+			fwrite(&p->us->string_len, sizeof(llu), 1, out);
 			fwrite(p->us->string, sizeof(uchar), p->us->string_len, out);
 			p = p->next;
 		}
@@ -569,23 +637,23 @@ int load_vector(FILE * in, struct hash_vector * p_hv) {
 		return -1;
 	}
 
-	fread(&p_hv->total_count, sizeof(unsigned long long), 1, in);
-	fread(&p_hv->hashlen, sizeof(size_t), 1, in);
-	fread(&p_hv->count, sizeof(size_t), 1, in);
+	fread(&p_hv->total_count, sizeof(llu), 1, in);
+	fread(&p_hv->hashlen, sizeof(llu), 1, in);
+	fread(&p_hv->count, sizeof(llu), 1, in);
 	p_hv->usa_list = calloc(p_hv->hashlen, sizeof(struct ustring_analysis *));
 	if (p_hv->usa_list == NULL) {
 		return -1;
 	}
 
-	for (size_t i = 0; i < p_hv->count; ++i) {
+	for (llu i = 0; i < p_hv->count; ++i) {
 		struct ustring_analysis * p = malloc(sizeof(struct ustring_analysis));
 		if (p == NULL) {
 			return -1;
 		}
-		fread(&p->count, sizeof(long long), 1, in);
+		fread(&p->count, sizeof(lld), 1, in);
 
-		size_t string_len;
-		fread(&string_len, sizeof(size_t), 1, in);
+		llu string_len;
+		fread(&string_len, sizeof(llu), 1, in);
 		uchar *s = calloc(string_len + 1, sizeof(uchar));
 		if (s == NULL) {
 			return -1;

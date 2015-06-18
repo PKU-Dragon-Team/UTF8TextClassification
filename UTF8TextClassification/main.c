@@ -21,7 +21,9 @@ int main(int arc, char * argv[]) {
 	struct text_list * tl = NULL;
 	init_text_list(&tl, NULL, 0);
 	// TODO: the input file is too big, and the memory usage is too high, should use incremental method
-	load_texts(in, tl);
+	if (load_texts(in, tl) != 0) {
+		return -1;
+	}
 	output_texts(out, tl);
 
 	FILE * out2;
@@ -49,7 +51,7 @@ int main(int arc, char * argv[]) {
 		init_hash_vector(&statistic[i]);
 	}
 
-	for (size_t i = 0; i < tl->len; ++i) {
+	for (llu i = 0; i < tl->len; ++i) {
 		struct hash_vector * temp = malloc(sizeof(struct hash_vector));
 		struct ustring_parse_list * p_list;
 		init_hash_vector(&temp);
