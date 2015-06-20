@@ -11,7 +11,6 @@
 #define HASH_SEED 0
 
 typedef bool(*Checker)(const uchar uc[]);
-typedef int(*Parser)(struct ustring_parse_list * p, const struct ustring * cp_us, Checker f);
 
 struct text {
 	struct ustring * us;

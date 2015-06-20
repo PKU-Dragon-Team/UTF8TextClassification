@@ -190,7 +190,7 @@ int load_texts(FILE * in, struct text_list * p_tlist) {
 				else {
 					struct ustring * temp = NULL;
 					init_ustring(&temp, index, s, BUF_SIZE);
-					cat_ustring(temp, us);
+					cat_ustring(us, temp);
 					clear_ustring(&temp);
 				}
 				break;
@@ -284,7 +284,7 @@ int output_char_analysis(FILE * out, const struct uchar_analysis * uca) {
 	fprintf_s(out, "Total Characters: %llu\n", uca->total_count);
 	for (int i = 0; i < MAX_UNICODE; ++i) {
 		if (uca->uchar_list[i] != 0) {
-			fprintf_s(out, "0x%02X\t%5lld\n", i, uca->uchar_list[i]);
+			fprintf_s(out, "0x%X\t%lld\n", i, uca->uchar_list[i]);
 		}
 	}
 	return 0;
@@ -349,7 +349,7 @@ int append_hash_vector(struct hash_vector * p_hv, const struct ustring * cp_us, 
 
 		struct ustring * temp = malloc(sizeof(struct ustring));
 		init_ustring(&temp, index, NULL, 0);
-		slice_ustring(cp_us, temp, p_uspl->start[i], p_uspl->end[i]);
+		slice_ustring(temp, cp_us, p_uspl->start[i], p_uspl->end[i]);
 		insert_hash_vector(p_hv, temp, 1, NULL);
 	}
 	return 0;
@@ -366,7 +366,7 @@ int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, lld
 	}
 	struct ustring * temp;
 	init_ustring(&temp, index, NULL, 0);
-	clone_ustring(us, temp);
+	clone_ustring(temp, us);
 
 	p_ua->us = temp;
 	p_ua->count = count;

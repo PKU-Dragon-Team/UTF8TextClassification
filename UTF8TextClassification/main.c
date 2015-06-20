@@ -20,7 +20,6 @@ int main(int arc, char * argv[]) {
 
 	struct text_list * tl = NULL;
 	init_text_list(&tl, NULL, 0);
-	// TODO: the input file is too big, and the memory usage is too high, should use incremental method
 	if (load_texts(in, tl) != 0) {
 		return -1;
 	}
