@@ -1,16 +1,39 @@
 #include "UTF8TextClassification.h"
 
-static void insert_usa_list(struct ustring_analysis * ap_usa[], struct ustring_analysis * p_usa, llu hashcode) {
+static bool insert_usa_list(struct ustring_analysis * ap_usa[], struct ustring_analysis * p_usa, llu hashcode) {
 	if (ap_usa[hashcode] == NULL) {
 		ap_usa[hashcode] = p_usa;
+		return true;
 	}
 	else {
 		struct ustring_analysis * p = ap_usa[hashcode];
-		while (p->next != NULL) {
-			p = p->next;
+
+		if (compare_ustring(p->us, p_usa->us) == 0) {
+			++p->count;
 		}
-		p->next = p_usa;
+		else {
+			bool flag = true;
+			while (p->next != NULL) {
+				if (compare_ustring(p->next->us, p_usa->us) == 0) {
+					++p->next->count;
+					flag = false;
+					break;
+				}
+				p = p->next;
+			}
+			if (flag) {
+				if (compare_ustring(p->us, p_usa->us) == 0) {
+					++p->count;
+				}
+				else {
+					p->next = p_usa;
+					return true;
+				}
+			}
+		}
+		return false;
 	}
+	return true;
 }
 
 static bool is_blank(const uchar uc[]) {
@@ -349,33 +372,11 @@ int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, lld
 	p_ua->count = count;
 	p_ua->next = next;
 
-	llu hashcode = hash_ustring(us, HASH_SEED, p_hv->hashlen);
-	// search for existence
-	struct ustring_analysis * p = p_hv->usa_list[hashcode];
-	if (p != NULL) {
-		while (p->next != NULL) {
-			if (compare_ustring(p->next->us, us) == 0) {
-				++p->next->count;
-				break;
-			}
-			p = p->next;
-		}
-		if (p->next == NULL) {
-			// while check failed: check p
-			if (compare_ustring(p->us, us) == 0) {
-				++p->count;
-				free(p_ua);
-			}
-			else {
-				// add to the end of link list
-				p->next = p_ua;
-			}
-		}
+	if (insert_usa_list(p_hv->usa_list, p_ua, hash_ustring(p_ua->us, HASH_SEED, p_hv->hashlen))) {
+		++p_hv->count;
 	}
 	else {
-		// add to the hash-map
-		p_hv->usa_list[hashcode] = p_ua;
-		++p_hv->count;
+		clear_ustring(&temp);
 	}
 	++p_hv->total_count;
 
