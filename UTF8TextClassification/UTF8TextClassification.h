@@ -47,7 +47,6 @@ struct ustring_parse_list {
 	llu len;
 };
 
-
 static void insert_usa_list(struct ustring_analysis * ap_usa[], struct ustring_analysis * p_usa, llu hashcode);
 static bool is_blank(const uchar uc[]);
 static void free_if_not_null(void * p);

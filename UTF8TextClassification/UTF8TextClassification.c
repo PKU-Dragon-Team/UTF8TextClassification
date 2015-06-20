@@ -122,18 +122,20 @@ int load_texts(FILE * in, struct text_list * p_tlist) {
 			first,
 			text,
 			type,
-			error,
-			error_end
+			error
 		} state = init;
-		// TODO: change this function into a state machine
 
 		uchar s[BUF_SIZE] = { 0 };
 		int8_t types[TYPE_COUNT] = { 0 };
 		struct ustring * us = NULL;
 		llu i = 0;
 		llu line = 0;
+		bool flag = true;
 
-		while (state != error_end && fgets(s, BUF_SIZE, in)) {
+		while (flag) {
+			if (fgets(s, BUF_SIZE, in) == NULL) {
+				flag = false;
+			}
 			switch (state) {
 			case init:
 				if (strnlen(s, BUF_SIZE) < 4 || !isdigit(s[3])) {
@@ -183,7 +185,6 @@ int load_texts(FILE * in, struct text_list * p_tlist) {
 					}
 					p_tlist->list[i] = *t;
 					++i;
-					clear_ustring(&us);
 					state = first;
 				}
 				break;
@@ -195,34 +196,8 @@ int load_texts(FILE * in, struct text_list * p_tlist) {
 				break;
 			}
 			++line;
-			//fgets(s, BUF_SIZE, in);		// the second line
-			//struct ustring * us = NULL;
-			//init_ustring(&us, index, s, BUF_SIZE);
-
-			//fgets(s, BUF_SIZE, in);		// the third line
-			//while (s[0] != '*') {
-			//	struct ustring * temp = NULL;
-			//	init_ustring(&temp, index, s, BUF_SIZE);
-			//	cat_ustring(temp, us);
-			//	clear_ustring(&temp);
-			//	fgets(s, BUF_SIZE, in);
-			//}
-			//int8_t types[TYPE_COUNT] = { 0 };
-			//parse_type(s, types);
-
-			//struct text * t = NULL;
-			//init_text(&t, us, types);
-
-			//if (i >= p_tlist->len) {	// Dynamic Expand
-			//	if (resize_text_list(p_tlist, p_tlist->len * 2 + 1) != 0) {
-			//		return -1;
-			//	}
-			//}
-			//p_tlist->list[i] = *t;
-			//++i;
 		}
-		resize_text_list(p_tlist, p_tlist->len + 1);
-		p_tlist->len = i;
+		resize_text_list(p_tlist, i);
 	}
 	return 0;
 }
@@ -403,6 +378,11 @@ int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, lld
 		++p_hv->count;
 	}
 	++p_hv->total_count;
+
+	// check if hash-map is overload
+	if (p_hv->count * 2 > p_hv->hashlen) {
+		rehash_hash_vector(p_hv, p_hv->hashlen * 2 + 1);
+	}
 
 	return 0;
 }
