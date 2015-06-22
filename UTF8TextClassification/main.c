@@ -24,6 +24,8 @@ int main(int arc, char * argv[]) {
 		return -1;
 	}
 	output_texts(out, tl);
+	fclose(in);
+	fclose(out);
 
 	FILE * out2;
 	fopen_s(&out2, "out2.txt", "w");
@@ -33,6 +35,7 @@ int main(int arc, char * argv[]) {
 
 	get_char_analysis(tl, &uca);
 	output_char_analysis(out2, &uca);
+	fclose(out2);
 
 	FILE * out3[TYPE_COUNT + 1];
 	for (int i = 0; i < TYPE_COUNT + 1; ++i) {
@@ -51,7 +54,7 @@ int main(int arc, char * argv[]) {
 	}
 
 	for (llu i = 0; i < tl->len; ++i) {
-		struct hash_vector * temp = malloc(sizeof(struct hash_vector));
+		struct hash_vector * temp;
 		struct ustring_parse_list * p_list;
 		init_hash_vector(&temp);
 		init_uspl(&p_list);
@@ -70,13 +73,36 @@ int main(int arc, char * argv[]) {
 	for (int i = 0; i < TYPE_COUNT + 1; ++i) {
 		output_hash_vector(out3[i], statistic[i]);
 	}
-
-	fclose(in);
-	fclose(out);
-	fclose(out2);
-
 	for (int i = 0; i < TYPE_COUNT + 1; ++i) {
 		fclose(out3[i]);
 	}
+
+	FILE * out4;
+	fopen_s(&out4, "out4.txt", "w");
+	if (out4 == NULL) {
+		return -1;
+	}
+
+	for (llu i = 0; i < tl->len; ++i) {
+		struct hash_vector * temp;
+		struct ustring_parse_list * p_list;
+		Lf cos[TYPE_COUNT] = { 0 };
+
+		init_hash_vector(&temp);
+		init_uspl(&p_list);
+		commonParser(p_list, tl->list[i].us, checker);
+		append_hash_vector(temp, tl->list[i].us, p_list);
+
+		for (int j = 0; j < TYPE_COUNT; ++j) {
+			cos[j] = cos_hash_vector(statistic[j], temp);
+			fprintf_s(out4, "%Lf%s", cos[j], (j == TYPE_COUNT - 1) ? "" : "\t");
+		}
+		fprintf_s(out4, "%s", (i == tl->len - 1) ? "" : "\n");
+		fflush(out4);
+		clear_hash_vector(&temp);
+	}
+	// TODO: the speed is too low, consider cut down or choose smaller vector
+	fclose(out4);
+
 	return 0;
 }

@@ -3,6 +3,7 @@
 
 #include "ucharLib.h"
 #include <ctype.h>
+#include <math.h>
 
 #define TYPE_COUNT 4
 #define BUF_SIZE 10000
@@ -11,6 +12,7 @@
 #define HASH_SEED 0
 
 typedef bool(*Checker)(const uchar uc[]);
+typedef long double Lf;
 
 struct text {
 	struct ustring * us;
@@ -77,6 +79,7 @@ int add_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2
 int sub_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
 lld product_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
 llu len2_hash_vector(const struct hash_vector * p_hv);
+Lf cos_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
 
 int clear_hash_vector(struct hash_vector ** pp_hv);
 

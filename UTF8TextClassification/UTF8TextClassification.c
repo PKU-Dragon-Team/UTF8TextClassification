@@ -421,26 +421,39 @@ int sub_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2
 }
 
 lld product_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * p_hv2) {
+	const struct hash_vector * p1;
+	const struct hash_vector * p2;
 	lld product = 0;
 
-	for (llu i = 0; i < p_hv1->hashlen; ++i) {
-		struct ustring_analysis * p = p_hv1->usa_list[i];
-		struct ustring_analysis * q;
-		if (p_hv1->hashlen == p_hv2->hashlen) {
-			q = p_hv2->usa_list[i];
-		}
-		else {
-			q = p_hv2->usa_list[hash_ustring(p->us, HASH_SEED, p_hv2->hashlen)];
-		}
+	if (p_hv1->count > p_hv2->count) {
+		p1 = p_hv2;
+		p2 = p_hv1;
+	}
+	else {
+		p1 = p_hv1;
+		p2 = p_hv2;
+	}
 
-		while (p != NULL) {
-			while (q != NULL) {
-				if (compare_ustring(p->us, q->us) == 0) {
-					product += p->count * q->count;
-				}
-				q = q->next;
+	for (llu i = 0; i < p1->hashlen; ++i) {
+		if (p1->usa_list[i] != NULL) {
+			struct ustring_analysis * p = p1->usa_list[i];
+			struct ustring_analysis * q;
+			if (p1->hashlen == p2->hashlen) {
+				q = p2->usa_list[i];
 			}
-			p = p->next;
+			else {
+				q = p2->usa_list[hash_ustring(p->us, HASH_SEED, p2->hashlen)];
+			}
+
+			while (p != NULL) {
+				while (q != NULL) {
+					if (compare_ustring(p->us, q->us) == 0) {
+						product += p->count * q->count;
+					}
+					q = q->next;
+				}
+				p = p->next;
+			}
 		}
 	}
 	return product;
@@ -459,6 +472,11 @@ llu len2_hash_vector(const struct hash_vector * p_hv) {
 	return len2;
 }
 
+Lf cos_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * p_hv2) {
+	return (Lf)product_hash_vector(p_hv1, p_hv2) / sqrtl((Lf)len2_hash_vector(p_hv1) * (Lf)len2_hash_vector(p_hv2));
+}
+
+
 int clear_hash_vector(struct hash_vector ** pp_hv) {
 	if (pp_hv == NULL || *pp_hv == NULL || (*pp_hv)->usa_list == NULL) {
 		return -1;
@@ -473,6 +491,7 @@ int clear_hash_vector(struct hash_vector ** pp_hv) {
 	}
 	free((*pp_hv)->usa_list);
 	free(*pp_hv);
+	*pp_hv = NULL;
 	return 0;
 }
 
