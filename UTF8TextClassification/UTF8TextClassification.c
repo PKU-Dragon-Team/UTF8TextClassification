@@ -9,13 +9,13 @@ static bool insert_usa_list(struct ustring_analysis * ap_usa[], struct ustring_a
 		struct ustring_analysis * p = ap_usa[hashcode];
 
 		if (compare_ustring(p->us, p_usa->us) == 0) {
-			++p->count;
+			p->count += p_usa->count;
 		}
 		else {
 			bool flag = true;
 			while (p->next != NULL) {
 				if (compare_ustring(p->next->us, p_usa->us) == 0) {
-					++p->next->count;
+					p->next->count += p_usa->count;
 					flag = false;
 					break;
 				}
@@ -23,7 +23,7 @@ static bool insert_usa_list(struct ustring_analysis * ap_usa[], struct ustring_a
 			}
 			if (flag) {
 				if (compare_ustring(p->us, p_usa->us) == 0) {
-					++p->count;
+					p->count += p_usa->count;
 				}
 				else {
 					p->next = p_usa;
@@ -378,7 +378,7 @@ int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * us, lld
 	else {
 		clear_ustring(&temp);
 	}
-	++p_hv->total_count;
+	p_hv->total_count += llabs(count);
 
 	// check if hash-map is overload
 	if (p_hv->count * 2 > p_hv->hashlen) {
@@ -415,6 +415,30 @@ int sub_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2
 		while (p != NULL) {
 			insert_hash_vector(p_hv1, p->us, -p->count, NULL);
 			p = p->next;
+		}
+	}
+	return 0;
+}
+
+int low_cut_hash_vector(struct hash_vector * p_hv, lld min_count) {
+	if (p_hv == NULL) {
+		return -1;
+	}
+	for (llu i = 0; i < p_hv->hashlen; ++i) {
+		if (p_hv->usa_list[i] != NULL) {
+			struct ustring_analysis ** pp = &p_hv->usa_list[i];
+			while (*pp != NULL) {
+				struct ustring_analysis * p_next = (*pp)->next;
+				if ((*pp)->count < min_count) {
+					clear_ustring(&(*pp)->us);
+					free(*pp);
+					*pp = p_next;
+				}
+				else {
+					pp = &(*pp)->next;
+				}
+				*pp = p_next;
+			}
 		}
 	}
 	return 0;

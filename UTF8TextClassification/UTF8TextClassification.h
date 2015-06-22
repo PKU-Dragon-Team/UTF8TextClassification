@@ -36,10 +36,10 @@ struct ustring_analysis {
 };
 
 struct hash_vector {
-	llu total_count;
+	llu total_count;	// the number of words that counted
 	struct ustring_analysis ** usa_list;
-	llu hashlen;
-	llu count;
+	llu hashlen;	// the length of hashmap
+	llu count;		// the number of non-NULL node in hashmap
 };
 
 struct ustring_parse_list {
@@ -77,6 +77,7 @@ static int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * 
 
 int add_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
 int sub_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
+int low_cut_hash_vector(struct hash_vector * p_hv, lld min_count);
 lld product_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
 llu len2_hash_vector(const struct hash_vector * p_hv);
 Lf cos_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * p_hv2);

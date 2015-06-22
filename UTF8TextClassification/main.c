@@ -66,11 +66,15 @@ int main(int arc, char * argv[]) {
 			if (tl->list[i].types[j] == 1) {
 				add_hash_vector(statistic[j], temp);
 			}
+			else if (tl->list[i].types[j] == 0) {
+				sub_hash_vector(statistic[j], temp);
+			}
 		}
 		clear_hash_vector(&temp);
 	}
 
 	for (int i = 0; i < TYPE_COUNT + 1; ++i) {
+		low_cut_hash_vector(statistic[i], 1);
 		output_hash_vector(out3[i], statistic[i]);
 	}
 	for (int i = 0; i < TYPE_COUNT + 1; ++i) {
@@ -78,11 +82,14 @@ int main(int arc, char * argv[]) {
 	}
 
 	FILE * out4;
+	FILE * out5;
 	fopen_s(&out4, "out4.txt", "w");
-	if (out4 == NULL) {
+	fopen_s(&out5, "out5.txt", "w");
+	if (out4 == NULL || out5 == NULL) {
 		return -1;
 	}
 
+	llu correct = 0;
 	for (llu i = 0; i < tl->len; ++i) {
 		struct hash_vector * temp;
 		struct ustring_parse_list * p_list;
@@ -98,11 +105,39 @@ int main(int arc, char * argv[]) {
 			fprintf_s(out4, "%Lf%s", cos[j], (j == TYPE_COUNT - 1) ? "" : "\t");
 		}
 		fprintf_s(out4, "%s", (i == tl->len - 1) ? "" : "\n");
-		fflush(out4);
+
+		int8_t test[TYPE_COUNT] = { 0 };
+		{
+			bool flag = true;
+			for (int j = 0; j < TYPE_COUNT - 1; ++j) {
+				if (cos[j] > 0) {
+					test[j] = 1;
+					flag = false;
+				}
+			}
+			if (flag) {
+				test[TYPE_COUNT - 1] = 1;
+			}
+		}
+		{
+			bool flag = true;
+			for (int j = 0; j < TYPE_COUNT; ++j) {
+				if (test[j] != tl->list[i].types[j]) {
+					flag = false;
+				}
+			}
+			if (flag) {
+				++correct;
+			}
+		}
+
 		clear_hash_vector(&temp);
 	}
-	// TODO: the speed is too low, consider cut down or choose smaller vector
+	fprintf_s(out5, "%llu\n%llu\n%Lf", correct, tl->len, (Lf)correct / (Lf)tl->len);
+
+	// now with AVX2, fast float and cut down at 1, the time cost down to 30s/10000texts
 	fclose(out4);
+	fclose(out5);
 
 	return 0;
 }
