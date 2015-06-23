@@ -13,6 +13,7 @@
 
 typedef bool(*Checker)(const uchar uc[]);
 typedef long double Lf;
+typedef int type_t;
 
 struct text {
 	struct ustring * us;
@@ -92,7 +93,10 @@ int clear_uspl(struct ustring_parse_list ** pp_uspl);
 
 void output_hash_vector(FILE * out, const struct hash_vector * p_hv);
 
+int train_vector(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_list * p_tl, Checker checker);
 int save_vector(FILE * out, const struct hash_vector * p_hv);
+int save_vectors(FILE * out, const struct hash_vector * ap_hv[TYPE_COUNT + 1]);
 int load_vector(FILE * in, struct hash_vector * p_hv);
+int load_vectors(FILE * in, struct hash_vector * ap_hv[TYPE_COUNT + 1]);
 
 #endif

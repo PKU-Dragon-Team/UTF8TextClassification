@@ -58,7 +58,7 @@ int init_text(struct text ** pp_text, struct ustring * us, int8_t types[TYPE_COU
 
 	(*pp_text)->us = us;
 
-	for (int i = 0; i < TYPE_COUNT; ++i) {
+	for (type_t i = 0; i < TYPE_COUNT; ++i) {
 		(*pp_text)->types[i] = types[i];
 	}
 	return 0;
@@ -230,12 +230,12 @@ int parse_type(const uchar a_type[], int8_t types[TYPE_COUNT]) {
 		return -1;
 	}
 
-	for (int i = 0; i < TYPE_COUNT; ++i) {
+	for (type_t i = 0; i < TYPE_COUNT; ++i) {
 		types[i] = -1;
 	}
 
 	llu n = strlen(a_type);
-	int ti = 0;
+	type_t ti = 0;
 	for (llu i = 0; i < n; ++i) {
 		if (ti < TYPE_COUNT && a_type[i] != '*' && a_type[i] != '(' && a_type[i] != ')' && a_type[i] != '\n') {
 			types[ti] = a_type[i] - '0';
@@ -252,7 +252,7 @@ int output_texts(FILE * out, const struct text_list * p_tlist) {
 
 	for (llu i = 0; i < p_tlist->len; ++i) {
 		fprintf_s(out, "***%llu\n%s***(", i + 1, p_tlist->list[i].us->string);
-		for (int j = 0; j < TYPE_COUNT; ++j) {
+		for (type_t j = 0; j < TYPE_COUNT; ++j) {
 			if (p_tlist->list[i].types[j] != -1) {
 				fprintf_s(out, "%d", p_tlist->list[i].types[j]);
 			}
@@ -282,9 +282,9 @@ int output_char_analysis(FILE * out, const struct uchar_analysis * uca) {
 	}
 
 	fprintf_s(out, "Total Characters: %llu\n", uca->total_count);
-	for (int i = 0; i < MAX_UNICODE; ++i) {
+	for (llu i = 0; i < MAX_UNICODE; ++i) {
 		if (uca->uchar_list[i] != 0) {
-			fprintf_s(out, "0x%X\t%lld\n", i, uca->uchar_list[i]);
+			fprintf_s(out, "0x%llX\t%lld\n", i, uca->uchar_list[i]);
 		}
 	}
 	return 0;
@@ -424,20 +424,32 @@ int low_cut_hash_vector(struct hash_vector * p_hv, lld min_count) {
 	if (p_hv == NULL) {
 		return -1;
 	}
+
 	for (llu i = 0; i < p_hv->hashlen; ++i) {
-		if (p_hv->usa_list[i] != NULL) {
-			struct ustring_analysis ** pp = &p_hv->usa_list[i];
-			while (*pp != NULL) {
-				struct ustring_analysis * p_next = (*pp)->next;
-				if ((*pp)->count < min_count) {
-					clear_ustring(&(*pp)->us);
-					free(*pp);
-					*pp = p_next;
+		if (p_hv->usa_list != NULL && p_hv->usa_list[i] != NULL) {
+			struct ustring_analysis * p_pre = p_hv->usa_list[i];
+			struct ustring_analysis * p = p_pre;
+			while (p != NULL) {
+				if (p->count < min_count) {
+					clear_ustring(&p->us);
+					if (p == p_hv->usa_list[i]) {
+						p_hv->usa_list[i] = p->next;
+						p_pre = p_hv->usa_list[i];
+						free(p);
+						p = p_pre;
+					}
+					else {
+						p_pre->next = p->next;
+						free(p);
+						p = p_pre->next;
+					}
 				}
 				else {
-					pp = &(*pp)->next;
+					if (p != p_hv->usa_list[i]) {
+						p_pre = p;
+					}
+					p = p->next;
 				}
-				*pp = p_next;
 			}
 		}
 	}
@@ -634,8 +646,43 @@ void output_hash_vector(FILE * out, const struct hash_vector * p_hv) {
 	}
 }
 
+int train_vector(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_list * p_tl, Checker checker) {
+	if (ap_hv == NULL || p_tl == NULL) {
+		return -1;
+	}
+
+	for (type_t i = 0; i < TYPE_COUNT + 1; ++i) {
+		init_hash_vector(&ap_hv[i]);
+	}
+
+	for (llu i = 0; i < p_tl->len; ++i) {
+		struct hash_vector * temp;
+		struct ustring_parse_list * p_list;
+		init_hash_vector(&temp);
+		init_uspl(&p_list);
+		commonParser(p_list, p_tl->list[i].us, checker);
+		append_hash_vector(temp, p_tl->list[i].us, p_list);
+
+		add_hash_vector(ap_hv[TYPE_COUNT], temp);
+		for (type_t j = 0; j < TYPE_COUNT; ++j) {
+			if (p_tl->list[i].types[j] == 1) {
+				add_hash_vector(ap_hv[j], temp);
+			}
+			else if (p_tl->list[i].types[j] == 0) {
+				sub_hash_vector(ap_hv[j], temp);
+			}
+		}
+		clear_hash_vector(&temp);
+	}
+
+	for (type_t i = 0; i < TYPE_COUNT + 1; ++i) {
+		low_cut_hash_vector(ap_hv[i], 1);
+	}
+	return 0;
+}
+
 int save_vector(FILE * out, const struct hash_vector * p_hv) {
-	if (out == NULL) {
+	if (out == NULL || p_hv == NULL) {
 		return -1;
 	}
 
@@ -656,8 +703,19 @@ int save_vector(FILE * out, const struct hash_vector * p_hv) {
 	return 0;
 }
 
+int save_vectors(FILE * out, const struct hash_vector * ap_hv[TYPE_COUNT + 1]) {
+	if (out == NULL || ap_hv == NULL) {
+		return -1;
+	}
+
+	for (type_t i = 0; i < TYPE_COUNT; ++i) {
+		save_vector(out, ap_hv[i]);
+	}
+	return 0;
+}
+
 int load_vector(FILE * in, struct hash_vector * p_hv) {
-	if (in == NULL) {
+	if (in == NULL || p_hv == NULL) {
 		return -1;
 	}
 
@@ -689,6 +747,17 @@ int load_vector(FILE * in, struct hash_vector * p_hv) {
 		p->us = us;
 
 		insert_usa_list(p_hv->usa_list, p, hash_ustring(us, 0, p_hv->hashlen));
+	}
+	return 0;
+}
+
+int load_vectors(FILE * in, struct hash_vector * ap_hv[TYPE_COUNT + 1]) {
+	if (in == NULL || ap_hv == NULL) {
+		return -1;
+	}
+
+	for (type_t i = 0; i < TYPE_COUNT; ++i) {
+		load_vector(in, ap_hv[i]);
 	}
 	return 0;
 }
