@@ -727,7 +727,7 @@ int load_vector(FILE * in, struct hash_vector * p_hv) {
 		return -1;
 	}
 
-	for (llu i = 0; i < p_hv->count; ++i) {
+	for (llu i = 0; i < p_hv->hashlen; ++i) {
 		struct ustring_analysis * p = malloc(sizeof(struct ustring_analysis));
 		if (p == NULL) {
 			return -1;
