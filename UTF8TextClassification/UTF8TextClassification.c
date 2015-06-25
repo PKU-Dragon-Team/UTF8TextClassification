@@ -745,6 +745,7 @@ int load_vector(FILE * in, struct hash_vector * p_hv) {
 		struct ustring *us = NULL;
 		init_ustring(&us, index, s, string_len);
 		p->us = us;
+		p->next = NULL;
 
 		insert_usa_list(p_hv->usa_list, p, hash_ustring(us, 0, p_hv->hashlen));
 	}

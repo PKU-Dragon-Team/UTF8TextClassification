@@ -57,15 +57,15 @@ int main(int argc, char * argv[]) {
 		fclose(out3[i]);
 	}
 	
-	//FILE * bin_out;
-	//fopen_s(&bin_out, "vector.bin", "w");
-	//save_vectors(bin_out, statistic);
-	//fclose(bin_out);
+	FILE * bin_out;
+	fopen_s(&bin_out, "vector.bin", "wb");
+	save_vectors(bin_out, statistic);
+	fclose(bin_out);
 
-	//FILE * bin_in;
-	//fopen_s(&bin_in, "vector.bin", "r");
-	//load_vectors(bin_in, statistic);
-	//fclose(bin_in);
+	FILE * bin_in;
+	fopen_s(&bin_in, "vector.bin", "rb");
+	load_vectors(bin_in, statistic);
+	fclose(bin_in);
 
 	FILE * out4;
 	FILE * out5;
