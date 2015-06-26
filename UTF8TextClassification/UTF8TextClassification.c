@@ -401,6 +401,8 @@ int add_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2
 			p = p->next;
 		}
 	}
+	recount_hash_vector(p_hv1);
+
 	return 0;
 }
 
@@ -417,6 +419,8 @@ int sub_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2
 			p = p->next;
 		}
 	}
+	recount_hash_vector(p_hv1);
+
 	return 0;
 }
 
@@ -453,6 +457,32 @@ int low_cut_hash_vector(struct hash_vector * p_hv, lld min_count) {
 			}
 		}
 	}
+	recount_hash_vector(p_hv);
+
+	return 0;
+}
+
+int recount_hash_vector(struct hash_vector * p_hv) {
+	if (p_hv == NULL) {
+		return -1;
+	}
+
+	llu count = 0;
+	llu total_count = 0;
+	for (llu i = 0; i < p_hv->hashlen; ++i) {
+		if (p_hv->usa_list[i] != NULL) {
+			++count;
+
+			struct ustring_analysis * p = p_hv->usa_list[i];
+			while (p != NULL) {
+				total_count += llabs(p->count);
+				p = p->next;
+			}
+		}
+	}
+
+	p_hv->total_count = total_count;
+	p_hv->count = count;
 	return 0;
 }
 
@@ -690,7 +720,18 @@ int save_vector(FILE * out, const struct hash_vector * p_hv) {
 	fwrite(&p_hv->hashlen, sizeof(llu), 1, out);
 	fwrite(&p_hv->count, sizeof(llu), 1, out);
 
-	// traverse the hashmap
+	llu count = 0;
+	// traverse the hashmap the first time
+	for (llu i = 0; i < p_hv->hashlen; ++i) {
+		struct ustring_analysis * p = p_hv->usa_list[i];
+		while (p != NULL) {
+			++count;
+			p = p->next;
+		}
+	}
+	fwrite(&count, sizeof(llu), 1, out);
+
+	// traverse the hashmap the second time
 	for (llu i = 0; i < p_hv->hashlen; ++i) {
 		struct ustring_analysis * p = p_hv->usa_list[i];
 		while (p != NULL) {
@@ -719,15 +760,27 @@ int load_vector(FILE * in, struct hash_vector * p_hv) {
 		return -1;
 	}
 
-	fread(&p_hv->total_count, sizeof(llu), 1, in);
-	fread(&p_hv->hashlen, sizeof(llu), 1, in);
-	fread(&p_hv->count, sizeof(llu), 1, in);
+	if (fread(&p_hv->total_count, sizeof(llu), 1, in) == 0) {
+		return -1;
+	}
+	if (fread(&p_hv->hashlen, sizeof(llu), 1, in) == 0) {
+		return -1;
+	}
+	if (fread(&p_hv->count, sizeof(llu), 1, in) == 0) {
+		return -1;
+	}
+
 	p_hv->usa_list = calloc(p_hv->hashlen, sizeof(struct ustring_analysis *));
 	if (p_hv->usa_list == NULL) {
 		return -1;
 	}
 
-	for (llu i = 0; i < p_hv->hashlen; ++i) {
+	llu count;
+	if (fread(&count, sizeof(llu), 1, in) == 0) {
+		return -1;
+	}
+
+	for (llu i = 0; i < count; ++i) {
 		struct ustring_analysis * p = malloc(sizeof(struct ustring_analysis));
 		if (p == NULL) {
 			return -1;

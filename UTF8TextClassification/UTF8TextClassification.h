@@ -79,6 +79,8 @@ static int insert_hash_vector(struct hash_vector * p_hv, const struct ustring * 
 int add_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
 int sub_hash_vector(struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
 int low_cut_hash_vector(struct hash_vector * p_hv, lld min_count);
+int recount_hash_vector(struct hash_vector * p_hv);
+
 lld product_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
 llu len2_hash_vector(const struct hash_vector * p_hv);
 Lf cos_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * p_hv2);
