@@ -758,7 +758,9 @@ int load_vectors(FILE * in, struct hash_vector * ap_hv[TYPE_COUNT + 1]) {
 	}
 
 	for (type_t i = 0; i < TYPE_COUNT; ++i) {
-		load_vector(in, ap_hv[i]);
+		if (load_vector(in, ap_hv[i]) != 0) {
+			return -1;
+		}
 	}
 	return 0;
 }
