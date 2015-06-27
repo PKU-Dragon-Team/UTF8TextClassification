@@ -67,6 +67,7 @@ int main(int argc, char * argv[]) {
 	load_vectors(bin_in, statistic);
 	fclose(bin_in);
 
+	// TODO: split the trainer and the tester
 	FILE * out4;
 	FILE * out5;
 	fopen_s(&out4, "out4.txt", "w");
