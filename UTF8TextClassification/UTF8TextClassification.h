@@ -16,37 +16,37 @@ typedef long double Lf;
 typedef int type_t;
 
 struct text {
-	struct ustring * us;
-	int8_t types[TYPE_COUNT];
+    struct ustring * us;
+    int8_t types[TYPE_COUNT];
 };
 
 struct text_list {
-	struct text * list;
-	llu len;
+    struct text * list;
+    llu len;
 };
 
 struct uchar_analysis {
-	llu total_count;
-	lld uchar_list[MAX_UNICODE];
+    llu total_count;
+    lld uchar_list[MAX_UNICODE];
 };
 
 struct ustring_analysis {
-	struct ustring * us;
-	lld count;
-	struct ustring_analysis * next;
+    struct ustring * us;
+    lld count;
+    struct ustring_analysis * next;
 };
 
 struct hash_vector {
-	llu total_count;	// the number of words that counted
-	struct ustring_analysis ** usa_list;
-	llu hashlen;	// the length of hashmap
-	llu count;		// the number of non-NULL node in hashmap
+    llu total_count;	// the number of words that counted
+    struct ustring_analysis ** usa_list;
+    llu hashlen;	// the length of hashmap
+    llu count;		// the number of non-NULL node in hashmap
 };
 
 struct ustring_parse_list {
-	llu * start;
-	llu * end;
-	llu len;
+    llu * start;
+    llu * end;
+    llu len;
 };
 
 int init_text(struct text ** pp_text, struct ustring * us, int8_t types[TYPE_COUNT]);
