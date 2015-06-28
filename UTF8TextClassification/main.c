@@ -11,13 +11,13 @@ int main(int argc, char * argv[]) {
     setlocale(LC_ALL, "en_US.UTF-8");
 
     /*	About console command:
-        classification
+        classification [option1] [value1] [option2] [value2] ...
         [-/]h, --help : display usage guide
-        [-/]t, --train train_text : set the file for training
-        [-/]T, --test test_text : set the file for testing
-        [-/]l, --load bin_file : set the vector file for loading.
+        [-/]t, --train file_name : set the file for training
+        [-/]T, --test file_name : set the file for testing
+        [-/]l, --load file_name : set the vector file for loading.
             If both -t and -l exist, will do incrementally training.
-        [-/]s, --save bin_file : set the file for saving
+        [-/]s, --save file_name : set the vector file for saving
     */
 
     FILE * in;
