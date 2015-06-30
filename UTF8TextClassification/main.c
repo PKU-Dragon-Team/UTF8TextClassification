@@ -7,18 +7,19 @@ static bool checker(const uchar uc[]) {
     return *uc == '\0' || *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ' || *uc == '.' || *uc == ',';
 }
 
+static const char * SHORT_USAGE = "UTF8TextClassification [-h] [-t file_name] [-T file_name] [-l file_name] [-s file_name]\n";
+
+static const char * USAGE =
+"UTF8TextClassification [option1] [value1] [option2] [value2] ...\n"
+"[-/]h, --help : display usage guide.\n"
+"[-/]t, --train file_name : set the file for training.\n"
+"[-/]T, --test file_name : set the file for testing.\n"
+"[-/]l, --load file_name : set the vector file for loading.\n"
+"\tIf both -t and -l exist, will do incrementally training.\n"
+"[-/]s, --save file_name : set the vector file for saving.\n";
+
 int main(int argc, char * argv[]) {
     setlocale(LC_ALL, "en_US.UTF-8");
-
-    /*	About console command:
-        classification [option1] [value1] [option2] [value2] ...
-        [-/]h, --help : display usage guide
-        [-/]t, --train file_name : set the file for training
-        [-/]T, --test file_name : set the file for testing
-        [-/]l, --load file_name : set the vector file for loading.
-            If both -t and -l exist, will do incrementally training.
-        [-/]s, --save file_name : set the vector file for saving
-    */
 
     FILE * in;
     FILE * out;
