@@ -21,6 +21,11 @@ static const char * USAGE =
 int main(int argc, char * argv[]) {
     setlocale(LC_ALL, "en_US.UTF-8");
 
+    if (argc < 2) {
+        printf(SHORT_USAGE);
+        return 0;
+    }
+
     FILE * in;
     FILE * out;
     fopen_s(&in, "in.txt", "r");
