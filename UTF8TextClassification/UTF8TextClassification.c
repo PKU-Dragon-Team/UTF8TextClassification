@@ -135,8 +135,8 @@ int clear_text_list(struct text_list ** pp_tlist) {
     return 0;
 }
 
-int load_texts(FILE * in, struct text_list * p_tlist) {
-    if (p_tlist == NULL || in == NULL) {
+int load_texts(FILE * input, struct text_list * p_tlist) {
+    if (p_tlist == NULL || input == NULL) {
         return -1;
     }
     else {
@@ -156,7 +156,7 @@ int load_texts(FILE * in, struct text_list * p_tlist) {
         bool flag = true;
 
         while (flag) {
-            if (fgets(s, BUF_SIZE, in) == NULL) {
+            if (fgets(s, BUF_SIZE, input) == NULL) {
                 flag = false;
             }
             switch (state) {
@@ -676,7 +676,7 @@ void output_hash_vector(FILE * out, const struct hash_vector * p_hv) {
     }
 }
 
-int train_vector(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_list * p_tl, Checker checker) {
+int naive_trainer(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_list * p_tl, Parser parser, Checker checker) {
     if (ap_hv == NULL || p_tl == NULL) {
         return -1;
     }
@@ -690,7 +690,7 @@ int train_vector(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_l
         struct ustring_parse_list * p_list;
         init_hash_vector(&temp);
         init_uspl(&p_list);
-        commonParser(p_list, p_tl->list[i].us, checker);
+        parser(p_list, p_tl->list[i].us, checker);
         append_hash_vector(temp, p_tl->list[i].us, p_list);
 
         add_hash_vector(ap_hv[TYPE_COUNT], temp);
@@ -708,6 +708,54 @@ int train_vector(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_l
     for (type_t i = 0; i < TYPE_COUNT + 1; ++i) {
         low_cut_hash_vector(ap_hv[i], 1);
     }
+    return 0;
+}
+
+int KNN_tester(FILE * out, struct text_list * p_tl, const struct hash_vector * statistic[TYPE_COUNT + 1], Parser parser, Checker checker) {
+    llu correct = 0;
+    for (llu i = 0; i < p_tl->len; ++i) {
+        struct hash_vector * temp;
+        struct ustring_parse_list * p_list;
+        Lf cos[TYPE_COUNT] = { 0 };
+
+        init_hash_vector(&temp);
+        init_uspl(&p_list);
+        parser(p_list, p_tl->list[i].us, checker);
+        append_hash_vector(temp, p_tl->list[i].us, p_list);
+
+        for (type_t j = 0; j < TYPE_COUNT; ++j) {
+            cos[j] = cos_hash_vector(statistic[j], temp);
+            fprintf_s(out, "%Lf%s", cos[j], (j == TYPE_COUNT - 1) ? "" : "\t");
+        }
+        fprintf_s(out, "%s", (i == p_tl->len - 1) ? "" : "\n");
+
+        int8_t test[TYPE_COUNT] = { 0 };
+        {
+            bool flag = true;
+            for (type_t j = 0; j < TYPE_COUNT - 1; ++j) {
+                if (cos[j] > 0) {
+                    test[j] = 1;
+                    flag = false;
+                }
+            }
+            if (flag) {
+                test[TYPE_COUNT - 1] = 1;
+            }
+        }
+        {
+            bool flag = true;
+            for (type_t j = 0; j < TYPE_COUNT; ++j) {
+                if (test[j] != p_tl->list[i].types[j]) {
+                    flag = false;
+                }
+            }
+            if (flag) {
+                ++correct;
+            }
+        }
+        clear_hash_vector(&temp);
+    }
+    printf_s("%llu\n%llu\n%Lf", correct, p_tl->len, (Lf)correct / (Lf)p_tl->len);
     return 0;
 }
 
@@ -755,18 +803,18 @@ int save_vectors(FILE * out, const struct hash_vector * ap_hv[TYPE_COUNT + 1]) {
     return 0;
 }
 
-int load_vector(FILE * in, struct hash_vector * p_hv) {
-    if (in == NULL || p_hv == NULL) {
+int load_vector(FILE * input, struct hash_vector * p_hv) {
+    if (input == NULL || p_hv == NULL) {
         return -1;
     }
 
-    if (fread(&p_hv->total_count, sizeof(llu), 1, in) == 0) {
+    if (fread(&p_hv->total_count, sizeof(llu), 1, input) == 0) {
         return -1;
     }
-    if (fread(&p_hv->hashlen, sizeof(llu), 1, in) == 0) {
+    if (fread(&p_hv->hashlen, sizeof(llu), 1, input) == 0) {
         return -1;
     }
-    if (fread(&p_hv->count, sizeof(llu), 1, in) == 0) {
+    if (fread(&p_hv->count, sizeof(llu), 1, input) == 0) {
         return -1;
     }
 
@@ -776,7 +824,7 @@ int load_vector(FILE * in, struct hash_vector * p_hv) {
     }
 
     llu count;
-    if (fread(&count, sizeof(llu), 1, in) == 0) {
+    if (fread(&count, sizeof(llu), 1, input) == 0) {
         return -1;
     }
 
@@ -785,15 +833,15 @@ int load_vector(FILE * in, struct hash_vector * p_hv) {
         if (p == NULL) {
             return -1;
         }
-        fread(&p->count, sizeof(lld), 1, in);
+        fread(&p->count, sizeof(lld), 1, input);
 
         llu string_len;
-        fread(&string_len, sizeof(llu), 1, in);
+        fread(&string_len, sizeof(llu), 1, input);
         uchar *s = calloc(string_len + 1, sizeof(uchar));
         if (s == NULL) {
             return -1;
         }
-        fread(s, sizeof(uchar), string_len, in);
+        fread(s, sizeof(uchar), string_len, input);
         s[string_len] = '\0';
         struct ustring *us = NULL;
         init_ustring(&us, index, s, string_len);
@@ -805,13 +853,13 @@ int load_vector(FILE * in, struct hash_vector * p_hv) {
     return 0;
 }
 
-int load_vectors(FILE * in, struct hash_vector * ap_hv[TYPE_COUNT + 1]) {
-    if (in == NULL || ap_hv == NULL) {
+int load_vectors(FILE * input, struct hash_vector * ap_hv[TYPE_COUNT + 1]) {
+    if (input == NULL || ap_hv == NULL) {
         return -1;
     }
 
     for (type_t i = 0; i < TYPE_COUNT; ++i) {
-        if (load_vector(in, ap_hv[i]) != 0) {
+        if (load_vector(input, ap_hv[i]) != 0) {
             return -1;
         }
     }

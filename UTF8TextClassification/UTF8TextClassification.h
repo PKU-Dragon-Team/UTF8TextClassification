@@ -12,6 +12,7 @@
 #define HASH_SEED 0
 
 typedef bool(*Checker)(const uchar uc[]);
+typedef int(*Parser)(struct ustring_parse_list * p, const struct ustring * cp_us, const Checker cf);
 typedef long double Lf;
 typedef int type_t;
 
@@ -56,7 +57,7 @@ int init_text_list(struct text_list ** pp_tlist, const struct text a_text[], llu
 int resize_text_list(struct text_list * p_tlist, llu len);
 int clear_text_list(struct text_list ** pp_tlist);
 
-int load_texts(FILE * in, struct text_list * p_tlist);
+int load_texts(FILE * input, struct text_list * p_tlist);
 int parse_type(const uchar a_type[], int8_t types[TYPE_COUNT]);
 int output_texts(FILE * out, const struct text_list * p_tlist);
 
@@ -91,10 +92,12 @@ int clear_uspl(struct ustring_parse_list ** pp_uspl);
 
 void output_hash_vector(FILE * out, const struct hash_vector * p_hv);
 
-int train_vector(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_list * p_tl, Checker checker);
+int naive_trainer(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_list * p_tl, Parser parser, Checker checker);
+int KNN_tester(FILE * out, struct text_list * p_tl, const struct hash_vector * statistic[TYPE_COUNT + 1], Parser parser, Checker checker);
+
 int save_vector(FILE * out, const struct hash_vector * p_hv);
 int save_vectors(FILE * out, const struct hash_vector * ap_hv[TYPE_COUNT + 1]);
-int load_vector(FILE * in, struct hash_vector * p_hv);
-int load_vectors(FILE * in, struct hash_vector * ap_hv[TYPE_COUNT + 1]);
+int load_vector(FILE * input, struct hash_vector * p_hv);
+int load_vectors(FILE * input, struct hash_vector * ap_hv[TYPE_COUNT + 1]);
 
 #endif
