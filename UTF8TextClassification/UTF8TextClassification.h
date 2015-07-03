@@ -94,6 +94,7 @@ void output_hash_vector(FILE * out, const struct hash_vector * p_hv);
 
 int naive_trainer(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_list * p_tl, Parser parser, Checker checker);
 int KNN_tester(FILE * out, struct text_list * p_tl, const struct hash_vector * statistic[TYPE_COUNT + 1], Parser parser, Checker checker);
+int KNN_classifier(FILE * out, struct text_list * p_tl, const struct hash_vector * statistic[TYPE_COUNT + 1], Parser parser, Checker checker);
 
 int save_vector(FILE * out, const struct hash_vector * p_hv);
 int save_vectors(FILE * out, const struct hash_vector * ap_hv[TYPE_COUNT + 1]);

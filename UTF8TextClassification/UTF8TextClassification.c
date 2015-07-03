@@ -681,8 +681,10 @@ int naive_trainer(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_
         return -1;
     }
 
-    for (type_t i = 0; i < TYPE_COUNT + 1; ++i) {
-        init_hash_vector(&ap_hv[i]);
+    for (type_t i = 0; i < TYPE_COUNT; ++i) {
+        if (ap_hv[i] == NULL) {
+            return -1;
+        }
     }
 
     for (llu i = 0; i < p_tl->len; ++i) {
@@ -755,7 +757,45 @@ int KNN_tester(FILE * out, struct text_list * p_tl, const struct hash_vector * s
         }
         clear_hash_vector(&temp);
     }
-    printf_s("%llu\n%llu\n%Lf", correct, p_tl->len, (Lf)correct / (Lf)p_tl->len);
+    printf_s("%llu Corrects\n%llu Total\n%Lf%% Right\n", correct, p_tl->len, (Lf)correct / (Lf)p_tl->len * 100);
+    return 0;
+}
+
+int KNN_classifier(FILE * out, struct text_list * p_tl, const struct hash_vector * statistic[TYPE_COUNT + 1], Parser parser, Checker checker) {
+    for (llu i = 0; i < p_tl->len; ++i) {
+        struct hash_vector * temp;
+        struct ustring_parse_list * p_list;
+        Lf cos[TYPE_COUNT] = { 0 };
+
+        init_hash_vector(&temp);
+        init_uspl(&p_list);
+        parser(p_list, p_tl->list[i].us, checker);
+        append_hash_vector(temp, p_tl->list[i].us, p_list);
+
+        for (type_t j = 0; j < TYPE_COUNT; ++j) {
+            cos[j] = cos_hash_vector(statistic[j], temp);
+        }
+
+        int8_t a_class[TYPE_COUNT] = { 0 };
+        {
+            bool flag = true;
+            for (type_t j = 0; j < TYPE_COUNT - 1; ++j) {
+                if (cos[j] > 0) {
+                    a_class[j] = 1;
+                    flag = false;
+                }
+            }
+            if (flag) {
+                a_class[TYPE_COUNT - 1] = 1;
+            }
+        }
+
+        for (type_t j = 0; j < TYPE_COUNT; ++j) {
+            fprintf_s(out, "%d", a_class[j]);
+        }
+        fprintf_s(out, "\n");
+        clear_hash_vector(&temp);
+    }
     return 0;
 }
 
