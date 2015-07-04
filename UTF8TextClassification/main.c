@@ -194,7 +194,7 @@ int main(int argc, char * argv[]) {
             break;
 
         case 't':
-            fopen_s(&input_stream, argv[++i], "r");
+            input_stream = fopen(argv[++i], "r");
             if (input_stream == NULL) {
                 printf("Cannot open training file \"%s\".\n", argv[i]);
                 return 1;
@@ -212,7 +212,7 @@ int main(int argc, char * argv[]) {
             break;
 
         case 'T':
-            fopen_s(&input_stream, argv[++i], "r");
+            input_stream = fopen(argv[++i], "r");
             if (input_stream == NULL) {
                 printf("Cannot open testing file \"%s\".\n", argv[i]);
                 return 1;
@@ -230,7 +230,7 @@ int main(int argc, char * argv[]) {
             break;
 
         case 'c':
-            fopen_s(&input_stream, argv[++i], "r");
+            input_stream = fopen(argv[++i], "r");
             if (input_stream == NULL) {
                 printf("Cannot open class file \"%s\".\n", argv[i]);
                 return 1;
@@ -248,7 +248,7 @@ int main(int argc, char * argv[]) {
             break;
 
         case 'l':
-            fopen_s(&bin_in, argv[++i], "rb");
+            bin_in = fopen(argv[++i], "rb");
             if (bin_in == NULL) {
                 printf("Cannot open vector file \"%s\".\n", argv[i]);
                 return 1;
@@ -265,7 +265,7 @@ int main(int argc, char * argv[]) {
             break;
 
         case 's':
-            fopen_s(&bin_out, argv[++i], "wb");
+            bin_out = fopen(argv[++i], "wb");
             if (bin_out == NULL) {
                 printf("Cannot open vector file \"%s\".\n", argv[i]);
                 return 1;
@@ -274,7 +274,7 @@ int main(int argc, char * argv[]) {
             break;
 
         case 'o':
-            fopen_s(&output_stream, argv[++i], "w");
+            output_stream = fopen(argv[++i], "w");
             if (output_stream == NULL) {
                 printf("Cannot open output file \"%s\".\n", argv[i]);
                 return 1;

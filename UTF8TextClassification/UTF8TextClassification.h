@@ -5,6 +5,10 @@
 #include <ctype.h>
 #include <math.h>
 
+#ifndef NO_TGMATH   // The tgmath.h is replace by math.h in Visual Studio
+#include <tgmath.h>
+#endif
+
 #define TYPE_COUNT 4    // The number of predefine classes of text, the last one should be "others"
 #define BUF_SIZE 10000
 #define BASE_HASH_LEN 65535
