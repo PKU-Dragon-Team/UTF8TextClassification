@@ -5,7 +5,7 @@ static bool checker(const uchar uc[]) {
     return *uc == '\0' || *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ' || *uc == '.' || *uc == ',';
 }
 
-static const char * SHORT_USAGE = "classifier [-h] [-t file_name] [-T file_name] [-l file_name] [-s file_name]\n";
+static const char * SHORT_USAGE = "Usage: classifier [-h] [-t file_name] [-T file_name] [-c file_name] [-l file_name] [-s file_name] [-o file_name]\n";
 
 static const char * USAGE =
 "classifier [option1] [value1] [option2] [value2] ...\n"

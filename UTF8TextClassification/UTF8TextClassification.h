@@ -93,11 +93,11 @@ int clear_uspl(struct ustring_parse_list ** pp_uspl);
 void output_hash_vector(FILE * out, const struct hash_vector * p_hv);
 
 int naive_trainer(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_list * p_tl, Parser parser, Checker checker);
-int KNN_tester(FILE * out, struct text_list * p_tl, const struct hash_vector * statistic[TYPE_COUNT + 1], Parser parser, Checker checker);
-int KNN_classifier(FILE * out, struct text_list * p_tl, const struct hash_vector * statistic[TYPE_COUNT + 1], Parser parser, Checker checker);
+int KNN_tester(FILE * out, struct text_list * p_tl, struct hash_vector * const statistic[TYPE_COUNT + 1], Parser parser, Checker checker);
+int KNN_classifier(FILE * out, struct text_list * p_tl, struct hash_vector * const statistic[TYPE_COUNT + 1], Parser parser, Checker checker);
 
 int save_vector(FILE * out, const struct hash_vector * p_hv);
-int save_vectors(FILE * out, const struct hash_vector * ap_hv[TYPE_COUNT + 1]);
+int save_vectors(FILE * out, struct hash_vector * const ap_hv[TYPE_COUNT + 1]);
 int load_vector(FILE * input, struct hash_vector * p_hv);
 int load_vectors(FILE * input, struct hash_vector * ap_hv[TYPE_COUNT + 1]);
 

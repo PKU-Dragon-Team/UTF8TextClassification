@@ -251,13 +251,13 @@ int output_texts(FILE * out, const struct text_list * p_tlist) {
     }
 
     for (llu i = 0; i < p_tlist->len; ++i) {
-        fprintf_s(out, "***%llu\n%s***(", i + 1, p_tlist->list[i].us->string);
+        fprintf(out, "***%llu\n%s***(", i + 1, p_tlist->list[i].us->string);
         for (type_t j = 0; j < TYPE_COUNT; ++j) {
             if (p_tlist->list[i].types[j] != -1) {
-                fprintf_s(out, "%d", p_tlist->list[i].types[j]);
+                fprintf(out, "%d", p_tlist->list[i].types[j]);
             }
         }
-        fprintf_s(out, ")%s", (i == p_tlist->len - 1) ? "" : "\n");
+        fprintf(out, ")%s", (i == p_tlist->len - 1) ? "" : "\n");
     }
     return 0;
 }
@@ -281,10 +281,10 @@ int output_char_analysis(FILE * out, const struct uchar_analysis * uca) {
         return -1;
     }
 
-    fprintf_s(out, "Total Characters: %llu\n", uca->total_count);
+    fprintf(out, "Total Characters: %llu\n", uca->total_count);
     for (llu i = 0; i < MAX_UNICODE; ++i) {
         if (uca->uchar_list[i] != 0) {
-            fprintf_s(out, "0x%llX\t%lld\n", i, uca->uchar_list[i]);
+            fprintf(out, "0x%llX\t%lld\n", i, uca->uchar_list[i]);
         }
     }
     return 0;
@@ -666,11 +666,11 @@ int clear_uspl(struct ustring_parse_list ** pp_uspl) {
 }
 
 void output_hash_vector(FILE * out, const struct hash_vector * p_hv) {
-    fprintf_s(out, "count\t%llu\ntotal_count\t%llu\nhashlen\t%llu\n", p_hv->count, p_hv->total_count, p_hv->hashlen);
+    fprintf(out, "count\t%llu\ntotal_count\t%llu\nhashlen\t%llu\n", p_hv->count, p_hv->total_count, p_hv->hashlen);
     for (llu i = 0; i < p_hv->hashlen; ++i) {
         struct ustring_analysis * p = p_hv->usa_list[i];
         while (p != NULL) {
-            fprintf_s(out, "%s\t%lld\n", p->us->string, p->count);
+            fprintf(out, "%s\t%lld\n", p->us->string, p->count);
             p = p->next;
         }
     }
@@ -713,7 +713,7 @@ int naive_trainer(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_
     return 0;
 }
 
-int KNN_tester(FILE * out, struct text_list * p_tl, const struct hash_vector * statistic[TYPE_COUNT + 1], Parser parser, Checker checker) {
+int KNN_tester(FILE * out, struct text_list * p_tl, struct hash_vector * const statistic[TYPE_COUNT + 1], Parser parser, Checker checker) {
     llu correct = 0;
     for (llu i = 0; i < p_tl->len; ++i) {
         struct hash_vector * temp;
@@ -727,9 +727,9 @@ int KNN_tester(FILE * out, struct text_list * p_tl, const struct hash_vector * s
 
         for (type_t j = 0; j < TYPE_COUNT; ++j) {
             cos[j] = cos_hash_vector(statistic[j], temp);
-            fprintf_s(out, "%Lf%s", cos[j], (j == TYPE_COUNT - 1) ? "" : "\t");
+            fprintf(out, "%Lf%s", cos[j], (j == TYPE_COUNT - 1) ? "" : "\t");
         }
-        fprintf_s(out, "%s", (i == p_tl->len - 1) ? "" : "\n");
+        fprintf(out, "%s", (i == p_tl->len - 1) ? "" : "\n");
 
         int8_t test[TYPE_COUNT] = { 0 };
         {
@@ -761,7 +761,7 @@ int KNN_tester(FILE * out, struct text_list * p_tl, const struct hash_vector * s
     return 0;
 }
 
-int KNN_classifier(FILE * out, struct text_list * p_tl, const struct hash_vector * statistic[TYPE_COUNT + 1], Parser parser, Checker checker) {
+int KNN_classifier(FILE * out, struct text_list * p_tl, struct hash_vector * const statistic[TYPE_COUNT + 1], Parser parser, Checker checker) {
     for (llu i = 0; i < p_tl->len; ++i) {
         struct hash_vector * temp;
         struct ustring_parse_list * p_list;
@@ -791,9 +791,9 @@ int KNN_classifier(FILE * out, struct text_list * p_tl, const struct hash_vector
         }
 
         for (type_t j = 0; j < TYPE_COUNT; ++j) {
-            fprintf_s(out, "%d", a_class[j]);
+            fprintf(out, "%d", a_class[j]);
         }
-        fprintf_s(out, "\n");
+        fprintf(out, "\n");
         clear_hash_vector(&temp);
     }
     return 0;
@@ -832,7 +832,7 @@ int save_vector(FILE * out, const struct hash_vector * p_hv) {
     return 0;
 }
 
-int save_vectors(FILE * out, const struct hash_vector * ap_hv[TYPE_COUNT + 1]) {
+int save_vectors(FILE * out, struct hash_vector * const ap_hv[TYPE_COUNT + 1]) {
     if (out == NULL || ap_hv == NULL) {
         return -1;
     }
