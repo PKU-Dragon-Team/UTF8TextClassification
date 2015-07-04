@@ -629,7 +629,7 @@ int KNN_tester(FILE * out, struct text_list * p_tl, struct hash_vector * const s
         }
         clear_hash_vector(&temp);
     }
-    printf_s("%llu Corrects\n%llu Total\n%Lf%% Right\n", correct, p_tl->len, (Lf)correct / (Lf)p_tl->len * 100);
+    printf_s("\n%llu Corrects\n%llu Total\n%Lf%% Right\n", correct, p_tl->len, (Lf)correct / (Lf)p_tl->len * 100);
     return 0;
 }
 
