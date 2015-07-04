@@ -135,133 +135,6 @@ int clear_text_list(struct text_list ** pp_tlist) {
     return 0;
 }
 
-int load_texts(FILE * input, struct text_list * p_tlist) {
-    if (p_tlist == NULL || input == NULL) {
-        return -1;
-    }
-    else {
-        enum {
-            init,
-            first,
-            text,
-            type,
-            error
-        } state = init;
-
-        uchar s[BUF_SIZE] = { 0 };
-        int8_t types[TYPE_COUNT] = { 0 };
-        struct ustring * us = NULL;
-        llu i = 0;
-        llu line = 0;
-        bool flag = true;
-
-        while (flag) {
-            if (fgets(s, BUF_SIZE, input) == NULL) {
-                flag = false;
-            }
-            switch (state) {
-            case init:
-                if (strnlen(s, BUF_SIZE) < 4 || !isdigit(s[3])) {
-                    state = error;
-                }
-                else {
-                    state = first;
-                }
-                break;
-            case first:
-                if (s[0] == '*') {
-                    state = error;
-                }
-                else {
-                    init_ustring(&us, index, s, BUF_SIZE);
-                    state = text;
-                }
-                break;
-            case text:
-                if (s[0] == '*') {
-                    if (strnlen(s, BUF_SIZE) < 5 || s[3] != '(') {
-                        state = error;
-                    }
-                    else {
-                        parse_type(s, types);
-                        state = type;
-                    }
-                }
-                else {
-                    struct ustring * temp = NULL;
-                    init_ustring(&temp, index, s, BUF_SIZE);
-                    cat_ustring(us, temp);
-                    clear_ustring(&temp);
-                }
-                break;
-            case type:
-                if (s[0] != '*') {
-                    state = error;
-                }
-                else {
-                    struct text * t = NULL;
-                    init_text(&t, us, types);
-                    if (i >= p_tlist->len) {	// Dynamic Expand
-                        if (resize_text_list(p_tlist, p_tlist->len * 2 + 1) != 0) {
-                            return -1;
-                        }
-                    }
-                    p_tlist->list[i] = *t;
-                    ++i;
-                    state = first;
-                }
-                break;
-            case error:
-                printf("Load error at line %llu, %llu texts have been read.\n", line, i);
-                return -1;
-                break;
-            default:
-                break;
-            }
-            ++line;
-        }
-        resize_text_list(p_tlist, i);
-    }
-    return 0;
-}
-
-int parse_type(const uchar a_type[], int8_t types[TYPE_COUNT]) {
-    if (a_type == NULL) {
-        return -1;
-    }
-
-    for (type_t i = 0; i < TYPE_COUNT; ++i) {
-        types[i] = -1;
-    }
-
-    llu n = strlen(a_type);
-    type_t ti = 0;
-    for (llu i = 0; i < n; ++i) {
-        if (ti < TYPE_COUNT && a_type[i] != '*' && a_type[i] != '(' && a_type[i] != ')' && a_type[i] != '\n') {
-            types[ti] = a_type[i] - '0';
-            ++ti;
-        }
-    }
-    return 0;
-}
-
-int output_texts(FILE * out, const struct text_list * p_tlist) {
-    if (p_tlist == NULL || out == NULL) {
-        return -1;
-    }
-
-    for (llu i = 0; i < p_tlist->len; ++i) {
-        fprintf(out, "***%llu\n%s***(", i + 1, p_tlist->list[i].us->string);
-        for (type_t j = 0; j < TYPE_COUNT; ++j) {
-            if (p_tlist->list[i].types[j] != -1) {
-                fprintf(out, "%d", p_tlist->list[i].types[j]);
-            }
-        }
-        fprintf(out, ")%s", (i == p_tlist->len - 1) ? "" : "\n");
-    }
-    return 0;
-}
-
 int get_char_analysis(const struct text_list * cp_tlist, struct uchar_analysis * uca) {
     if (cp_tlist == NULL || uca == NULL) {
         return -1;
@@ -542,7 +415,6 @@ Lf cos_hash_vector(const struct hash_vector * p_hv1, const struct hash_vector * 
     return (Lf)product_hash_vector(p_hv1, p_hv2) / sqrtl((Lf)len2_hash_vector(p_hv1) * (Lf)len2_hash_vector(p_hv2));
 }
 
-
 int clear_hash_vector(struct hash_vector ** pp_hv) {
     if (pp_hv == NULL || *pp_hv == NULL || (*pp_hv)->usa_list == NULL) {
         return -1;
@@ -799,14 +671,14 @@ int KNN_classifier(FILE * out, struct text_list * p_tl, struct hash_vector * con
     return 0;
 }
 
-int save_vector(FILE * out, const struct hash_vector * p_hv) {
-    if (out == NULL || p_hv == NULL) {
+int save_vector(FILE * output, const struct hash_vector * p_hv) {
+    if (output == NULL || p_hv == NULL) {
         return -1;
     }
 
-    fwrite(&p_hv->total_count, sizeof(llu), 1, out);
-    fwrite(&p_hv->hashlen, sizeof(llu), 1, out);
-    fwrite(&p_hv->count, sizeof(llu), 1, out);
+    fwrite(&p_hv->total_count, sizeof(llu), 1, output);
+    fwrite(&p_hv->hashlen, sizeof(llu), 1, output);
+    fwrite(&p_hv->count, sizeof(llu), 1, output);
 
     llu count = 0;
     // traverse the hashmap the first time
@@ -817,28 +689,28 @@ int save_vector(FILE * out, const struct hash_vector * p_hv) {
             p = p->next;
         }
     }
-    fwrite(&count, sizeof(llu), 1, out);
+    fwrite(&count, sizeof(llu), 1, output);
 
     // traverse the hashmap the second time
     for (llu i = 0; i < p_hv->hashlen; ++i) {
         struct ustring_analysis * p = p_hv->usa_list[i];
         while (p != NULL) {
-            fwrite(&p->count, sizeof(lld), 1, out);
-            fwrite(&p->us->string_len, sizeof(llu), 1, out);
-            fwrite(p->us->string, sizeof(uchar), p->us->string_len, out);
+            fwrite(&p->count, sizeof(lld), 1, output);
+            fwrite(&p->us->string_len, sizeof(llu), 1, output);
+            fwrite(p->us->string, sizeof(uchar), p->us->string_len, output);
             p = p->next;
         }
     }
     return 0;
 }
 
-int save_vectors(FILE * out, struct hash_vector * const ap_hv[TYPE_COUNT + 1]) {
-    if (out == NULL || ap_hv == NULL) {
+int save_vectors(FILE * output, struct hash_vector * const ap_hv[TYPE_COUNT + 1]) {
+    if (output == NULL || ap_hv == NULL) {
         return -1;
     }
 
     for (type_t i = 0; i < TYPE_COUNT; ++i) {
-        save_vector(out, ap_hv[i]);
+        save_vector(output, ap_hv[i]);
     }
     return 0;
 }

@@ -20,6 +20,136 @@ static const char * USAGE =
 "[-/]o file_name : set the file for output."
 "\tIf not given, the stdout will be used.";
 
+// The function to parse a type string
+int parse_type(const uchar a_type[], int8_t types[TYPE_COUNT]) {
+    if (a_type == NULL) {
+        return -1;
+    }
+
+    for (type_t i = 0; i < TYPE_COUNT; ++i) {
+        types[i] = -1;
+    }
+
+    llu n = strlen(a_type);
+    type_t ti = 0;
+    for (llu i = 0; i < n; ++i) {
+        if (ti < TYPE_COUNT && a_type[i] != '*' && a_type[i] != '(' && a_type[i] != ')' && a_type[i] != '\n') {
+            types[ti] = a_type[i] - '0';
+            ++ti;
+        }
+    }
+    return 0;
+}
+
+// The function to load text from input stream and store it in text_list
+int load_texts(FILE * input, struct text_list * p_tlist) {
+    if (p_tlist == NULL || input == NULL) {
+        return -1;
+    }
+    else {
+        enum {
+            init,
+            first,
+            text,
+            type,
+            error
+        } state = init;
+
+        uchar s[BUF_SIZE] = { 0 };
+        int8_t types[TYPE_COUNT] = { 0 };
+        struct ustring * us = NULL;
+        llu i = 0;
+        llu line = 0;
+        bool flag = true;
+
+        while (flag) {
+            if (fgets(s, BUF_SIZE, input) == NULL) {
+                flag = false;
+            }
+            switch (state) {
+            case init:
+                if (strnlen(s, BUF_SIZE) < 4 || !isdigit(s[3])) {
+                    state = error;
+                }
+                else {
+                    state = first;
+                }
+                break;
+            case first:
+                if (s[0] == '*') {
+                    state = error;
+                }
+                else {
+                    init_ustring(&us, index, s, BUF_SIZE);
+                    state = text;
+                }
+                break;
+            case text:
+                if (s[0] == '*') {
+                    if (strnlen(s, BUF_SIZE) < 5 || s[3] != '(') {
+                        state = error;
+                    }
+                    else {
+                        parse_type(s, types);
+                        state = type;
+                    }
+                }
+                else {
+                    struct ustring * temp = NULL;
+                    init_ustring(&temp, index, s, BUF_SIZE);
+                    cat_ustring(us, temp);
+                    clear_ustring(&temp);
+                }
+                break;
+            case type:
+                if (s[0] != '*') {
+                    state = error;
+                }
+                else {
+                    struct text * t = NULL;
+                    init_text(&t, us, types);
+                    if (i >= p_tlist->len) {	// Dynamic Expand
+                        if (resize_text_list(p_tlist, p_tlist->len * 2 + 1) != 0) {
+                            return -1;
+                        }
+                    }
+                    p_tlist->list[i] = *t;
+                    ++i;
+                    state = first;
+                }
+                break;
+            case error:
+                printf("Load error at line %llu, %llu texts have been read.\n", line, i);
+                return -1;
+                break;
+            default:
+                break;
+            }
+            ++line;
+        }
+        resize_text_list(p_tlist, i);
+    }
+    return 0;
+}
+
+// The function to output a text_list with the same format
+int output_texts(FILE * out, const struct text_list * p_tlist) {
+    if (p_tlist == NULL || out == NULL) {
+        return -1;
+    }
+
+    for (llu i = 0; i < p_tlist->len; ++i) {
+        fprintf(out, "***%llu\n%s***(", i + 1, p_tlist->list[i].us->string);
+        for (type_t j = 0; j < TYPE_COUNT; ++j) {
+            if (p_tlist->list[i].types[j] != -1) {
+                fprintf(out, "%d", p_tlist->list[i].types[j]);
+            }
+        }
+        fprintf(out, ")%s", (i == p_tlist->len - 1) ? "" : "\n");
+    }
+    return 0;
+}
+
 int main(int argc, char * argv[]) {
     setlocale(LC_ALL, "en_US.UTF-8");
 
