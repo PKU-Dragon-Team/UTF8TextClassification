@@ -1,4 +1,4 @@
-#include "UTF8TextClassification.h"
+#include "UStringVector.h"
 #include <locale.h>
 
 static bool checker(const uchar uc[]) {

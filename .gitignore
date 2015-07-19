@@ -209,3 +209,5 @@ ModelManifest.xml
 *.opt
 *.txt
 *.bin
+
+main.c
