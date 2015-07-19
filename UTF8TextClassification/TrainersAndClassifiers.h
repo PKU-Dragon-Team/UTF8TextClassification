@@ -2,6 +2,7 @@
 #define TRAINER_CLASSIFIER
 
 #include "UStringVector.h"
+#include "TextUtilities.h"
 
 // The trainer which simply add the vector when the class meets and sub the vector when not
 int naive_trainer(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_list * p_tl, Parser parser, Checker checker);
