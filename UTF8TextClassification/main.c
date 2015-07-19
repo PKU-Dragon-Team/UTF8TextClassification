@@ -1,4 +1,5 @@
 #include "UStringVector.h"
+#include "TrainersAndClassifiers.h"
 #include <locale.h>
 
 static bool checker(const uchar uc[]) {
