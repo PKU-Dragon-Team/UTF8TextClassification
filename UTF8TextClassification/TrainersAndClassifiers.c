@@ -38,8 +38,12 @@ int naive_trainer(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_
 }
 
 int KNN_tester(FILE * out, struct text_list * p_tl, struct hash_vector * const statistic[TYPE_COUNT + 1], Parser parser, Checker checker) {
-    llu correct = 0;
-    llu total = 0;
+    llu truePositive = 0;
+    llu trueNegative = 0;
+    llu falsePositive = 0;
+    llu falseNegative = 0;
+    llu PTotal = 0;
+    llu NTotal = 0;
     for (llu i = 0; i < p_tl->len; ++i) {
         struct hash_vector * temp;
         struct ustring_parse_list * p_list;
@@ -64,29 +68,51 @@ int KNN_tester(FILE * out, struct text_list * p_tl, struct hash_vector * const s
                 }
             }
         }
-        bool tflag = false;
+        bool pflag = false;
         for (type_t j = 0; j < TYPE_COUNT; ++j) {
             if (p_tl->list[i].types[j] == 1) {
-                tflag = true;
+                pflag = true;
             }
         }
-        if (tflag) {
-            ++total;
+        if (pflag) {
+            ++PTotal;
+        }
+        else {
+            ++NTotal;
         }
         {
-            bool cflag = true;
+            bool cflag = false;
             for (type_t j = 0; j < TYPE_COUNT; ++j) {
-                if (test[j] != p_tl->list[i].types[j]) {
-                    cflag = false;
+                if (test[j] == 1) {
+                    cflag = true;
                 }
             }
-            if (tflag && cflag) {
-                ++correct;
+            if (pflag && cflag) {
+                ++truePositive;
+            }
+            if (!pflag && !cflag) {
+                ++trueNegative;
+            }
+            if (!pflag && cflag) {
+                ++falsePositive;
+            }
+            if (pflag && !cflag) {
+                ++falseNegative;
             }
         }
         clear_hash_vector(&temp);
     }
-    printf("\n%llu Corrects\n%llu Total\n%Lf%% Right\n", correct, total, (Lf)correct / (Lf)total * 100);
+    printf("\n%llu Total\n"
+           "\tPositive Total: %llu\n"
+           "\t\tTrue Positive: %llu\n"
+           "\t\t\trate: %Lf%%\n"
+           "\t\tFalse Negative: %llu\n"
+           "\t\t\trate: %Lf%%\n"
+           "\tNegative Total: %llu\n"
+           "\t\tTrue Negative: %llu\n"
+           "\t\t\trate: %Lf%%\n"
+           "\t\tFalse Positive: %llu\n"
+           "\t\t\trate: %Lf%%\n", p_tl->len, PTotal, truePositive, (Lf)truePositive / (Lf)PTotal * 100, falseNegative, (Lf)falseNegative / (Lf)PTotal * 100, NTotal, trueNegative, (Lf)trueNegative / (Lf)NTotal * 100, falsePositive, (Lf)falsePositive / (Lf)NTotal * 100);
     return 0;
 }
 
