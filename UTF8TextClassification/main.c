@@ -7,6 +7,10 @@ static bool checker(const uchar uc[]) {
     return *uc == '\0' || *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ' || *uc == '.' || *uc == ',';
 }
 
+static bool checker_Tibetan(const uchar uc[]) {
+    return checker(uc) || *uc == '?';   // here will be a Tibetan full stop
+}
+
 static const char * SHORT_USAGE = "Usage: classifier [-h] [-t file_name] [-T file_name] [-c file_name] [-l file_name] [-s file_name] [-o file_name]\n";
 
 static const char * USAGE =

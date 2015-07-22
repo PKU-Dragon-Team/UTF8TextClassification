@@ -102,6 +102,7 @@ int KNN_tester(FILE * out, struct text_list * p_tl, struct hash_vector * const s
         }
         clear_hash_vector(&temp);
     }
+    // TODO: 把TYPE_COUNT个分类的命中率也输出出来
     printf("\n%llu Total\n"
            "\tPositive Total: %llu\n"
            "\t\tTrue Positive: %llu\n"
