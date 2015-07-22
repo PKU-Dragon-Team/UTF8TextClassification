@@ -4,7 +4,7 @@
 #include <locale.h>
 
 static bool checker(const uchar uc[]) {
-    return *uc == '\0' || *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ' || *uc == '.' || *uc == ',';
+    return *uc == '\0' || *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ' || *uc == '.' || *uc == ',' || *uc == '(' || *uc == ')';
 }
 
 static bool checker_Tibetan(const uchar uc[]) {
