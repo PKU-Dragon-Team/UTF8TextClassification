@@ -7,8 +7,12 @@ static bool checker(const uchar uc[]) {
     return *uc == '\0' || *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ' || *uc == '.' || *uc == ',' || *uc == '(' || *uc == ')';
 }
 
-static bool checker_Tibetan(const uchar uc[]) {
-    return checker(uc) || *uc == '?';   // here will be a Tibetan full stop
+static bool checker_Tibetan(const uchar uc[]) { // here checks a Tibetan Mark Inter-Syllabic Tsheg (U+0F0B)
+    return checker(uc) || \
+        (*uc == 0xE0 && *(uc + 1) == 0xBC && *(uc + 2) == 0x8B) || \
+        (*uc == 0xBC && *(uc - 1) == 0xE0 && *(uc + 1) == 0x8B) || \
+        (*uc == 0x8B && *(uc - 1) == 0xBC && *(uc - 2) == 0xE0);
+    // The order of checks is to make it won't cause array OOB
 }
 
 static const char * SHORT_USAGE = "Usage: classifier [-h] [-t file_name] [-T file_name] [-c file_name] [-l file_name] [-s file_name] [-o file_name]\n";
