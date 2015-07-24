@@ -3,10 +3,12 @@
 #include "TextUtilities.h"
 #include <locale.h>
 
+// The stop-list for general use
 static bool checker(const uchar uc[]) {
     return *uc == '\0' || *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ' || *uc == '.' || *uc == ',' || *uc == '(' || *uc == ')';
 }
 
+// The stop-list for Tibetan
 static bool checker_Tibetan(const uchar uc[]) { // here checks a Tibetan Mark Inter-Syllabic Tsheg (U+0F0B)
     return checker(uc) || \
         (*uc == 0xE0 && *(uc + 1) == 0xBC && *(uc + 2) == 0x8B) || \
