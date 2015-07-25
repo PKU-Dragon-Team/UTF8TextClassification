@@ -16,6 +16,7 @@ static bool checker_Tibetan(const uchar uc[]) { // here checks a Tibetan Mark In
         (*uc == 0x8B && *(uc - 1) == 0xBC && *(uc - 2) == 0xE0);
     // The order of checks is to make it won't cause array OOB
 }
+// IDEA: maybe there should be a Parser which support not-one-char stop
 
 static const char * SHORT_USAGE = "Usage: classifier [-h] [-t file_name] [-T file_name] [-c file_name] [-l file_name] [-s file_name] [-o file_name]\n";
 
