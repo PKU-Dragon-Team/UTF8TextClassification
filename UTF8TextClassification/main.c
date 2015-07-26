@@ -10,13 +10,9 @@ static bool checker(const uchar uc[]) {
 
 // The stop-list for Tibetan
 static bool checker_Tibetan(const uchar uc[]) { // here checks a Tibetan Mark Inter-Syllabic Tsheg (U+0F0B)
-    return checker(uc) || \
-        (*uc == 0xE0 && *(uc + 1) == 0xBC && *(uc + 2) == 0x8B) || \
-        (*uc == 0xBC && *(uc - 1) == 0xE0 && *(uc + 1) == 0x8B) || \
-        (*uc == 0x8B && *(uc - 1) == 0xBC && *(uc - 2) == 0xE0);
+    return checker(uc) || (*uc == 0xE0 && *(uc + 1) == 0xBC && *(uc + 2) == 0x8B);
     // The order of checks is to make it won't cause array OOB
 }
-// IDEA: maybe there should be a Parser which support not-one-char stop
 
 static const char * SHORT_USAGE = "Usage: classifier [-h] [-t file_name] [-T file_name] [-c file_name] [-l file_name] [-s file_name] [-o file_name]\n";
 
@@ -309,7 +305,7 @@ int main(int argc, char * argv[]) {
 
     if (isTrainingFileGiven) {
         printf("Training...\n");
-        naive_trainer(statistic, tl_train, commonParser, checker);
+        naive_trainer(statistic, tl_train, commonParser, checker_Tibetan);
         printf("Training finished.\n");
     }
 
@@ -326,13 +322,13 @@ int main(int argc, char * argv[]) {
 
     if (isTestFileGiven) {
         printf("Testing...\n");
-        KNN_tester(output_stream, tl_test, statistic, commonParser, checker);
+        KNN_tester(output_stream, tl_test, statistic, commonParser, checker_Tibetan);
         printf("Testing finished.\n");
     }
 
     if (isClassFileGiven) {
         printf("Classing...\n");
-        KNN_classifier(output_stream, tl_class, statistic, commonParser, checker);
+        KNN_classifier(output_stream, tl_class, statistic, commonParser, checker_Tibetan);
         printf("Classification finished.\n");
     }
 
