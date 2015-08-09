@@ -12,4 +12,8 @@ int KNN_tester(FILE * out, struct text_list * p_tl, struct hash_vector * const s
 
 // The classifier using K-Nearest Neighbors algorithm
 int KNN_classifier(FILE * out, struct text_list * p_tl, struct hash_vector * const statistic[TYPE_COUNT + 1], Parser parser, Checker checker);
+
+// Trainer that add the vector
+int NaiveBayes_trainer(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_list * p_tl, Parser parser, Checker checker);
+
 #endif
