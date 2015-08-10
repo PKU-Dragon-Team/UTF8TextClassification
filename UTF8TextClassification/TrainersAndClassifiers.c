@@ -19,15 +19,16 @@ static Lf get_possibility(const struct hash_vector * text, const struct hash_vec
             while (p != NULL) {
                 while (q != NULL) {
                     if (compare_ustring(p->us, q->us) == 0) {
-                        possibility *= (1 - (Lf)q->count / (Lf)p2->total_count / (Lf)p->count);
+                        possibility *= p->count * q->count * NB_CONVERGE;
                     }
                     q = q->next;
                 }
+                possibility /= NB_CONVERGE;
                 p = p->next;
             }
         }
     }
-    return 1 - possibility;
+    return possibility;
 }
 
 int naive_trainer(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_list * p_tl, Parser parser, Checker checker) {
@@ -293,7 +294,7 @@ int NB_tester(FILE * out, struct text_list * p_tl, struct hash_vector * const st
 
         for (type_t j = 0; j < TYPE_COUNT; ++j) {
             cos[j] = cos_hash_vector(statistic[j], temp);
-            possibility[j] = (Lf)statistic[j]->total_count / (Lf)statistic[TYPE_COUNT]->total_count * get_possibility(temp, statistic[j]);
+            possibility[j] = get_possibility(temp, statistic[j]) / (Lf)TYPE_COUNT;
             fprintf(out, "%Lf %Lf%s", cos[j], possibility[j], (j == TYPE_COUNT - 1) ? "" : "\t");
         }
         fprintf(out, "%s", (i == p_tl->len - 1) ? "" : "\n");
@@ -415,7 +416,7 @@ int NB_classifier(FILE * out, struct text_list * p_tl, struct hash_vector * cons
 
         for (type_t j = 0; j < TYPE_COUNT; ++j) {
             cos[j] = cos_hash_vector(statistic[j], temp);
-            possibility[j] = (Lf)statistic[j]->total_count / (Lf)statistic[TYPE_COUNT]->total_count * get_possibility(temp, statistic[j]);
+            possibility[j] = get_possibility(temp, statistic[j]) / (Lf)TYPE_COUNT;
         }
 
         int8_t a_class[TYPE_COUNT] = { 0 };

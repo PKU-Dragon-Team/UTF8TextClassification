@@ -323,7 +323,7 @@ int main(int argc, char * argv[]) {
 
     if (isTestFileGiven) {
         printf("Testing...\n");
-        KNN_tester(output_stream, tl_test, statistic, commonParser, checker_Tibetan);
+        //KNN_tester(output_stream, tl_test, statistic, commonParser, checker_Tibetan);
         NB_tester(output_stream, tl_test, statistic, commonParser, checker_Tibetan);
         printf("Testing finished.\n");
     }

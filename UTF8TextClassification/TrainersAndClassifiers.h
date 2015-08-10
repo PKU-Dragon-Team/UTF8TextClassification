@@ -4,8 +4,9 @@
 #include "UStringVector.h"
 #include "TextUtilities.h"
 
-#define NB_CUTDOWN 1
-#define NB_THRESHOLD 0
+#define NB_CUTDOWN 1e-50L
+#define NB_THRESHOLD 1e-10L
+#define NB_CONVERGE 10.0L
 
 // Trainer which simply add the vector when the class meets and sub the vector when not
 int naive_trainer(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_list * p_tl, Parser parser, Checker checker);
