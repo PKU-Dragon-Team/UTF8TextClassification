@@ -123,7 +123,7 @@ int save_vectors(FILE * output, struct hash_vector * const ap_hv[TYPE_COUNT + 1]
         return -1;
     }
 
-    for (type_t i = 0; i < TYPE_COUNT; ++i) {
+    for (type_t i = 0; i < TYPE_COUNT + 1; ++i) {
         save_vector(output, ap_hv[i]);
     }
     return 0;
@@ -134,7 +134,7 @@ int load_vectors(FILE * input, struct hash_vector * ap_hv[TYPE_COUNT + 1]) {
         return -1;
     }
 
-    for (type_t i = 0; i < TYPE_COUNT; ++i) {
+    for (type_t i = 0; i < TYPE_COUNT + 1; ++i) {
         if (load_vector(input, ap_hv[i]) != 0) {
             return -1;
         }
