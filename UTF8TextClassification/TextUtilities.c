@@ -48,11 +48,11 @@ int init_text_list(struct text_list ** pp_tlist, const struct text a_text[], llu
         (*pp_tlist)->len = 0;
     }
     else {
-        struct text * p = calloc(len, sizeof(struct text));
+        struct text * p = calloc((size_t)len, sizeof(struct text));
         if (p == NULL) {
             return -1;
         }
-        memcpy(p, a_text, len);
+        memcpy(p, a_text, (size_t)len);
         (*pp_tlist)->list = p;
         (*pp_tlist)->len = len;
     }
@@ -64,7 +64,7 @@ int resize_text_list(struct text_list * p_tlist, llu len) {
         return -1;
     }
 
-    struct text * p = realloc(p_tlist->list, len * sizeof(struct text));
+    struct text * p = realloc(p_tlist->list, (size_t)(len * sizeof(struct text)));
     if (p == NULL) {
         return -1;
     }
