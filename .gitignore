@@ -211,5 +211,3 @@ ModelManifest.xml
 *.bin
 
 main.c
-/UTF8TextClassification/UStringVector/
-/UTF8TextClassification/ucharLib/
