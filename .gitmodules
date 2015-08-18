@@ -1,6 +1,0 @@
-[submodule "UTF8TextClassification/ucharLib"]
-	path = UTF8TextClassification/ucharLib
-	url = https://github.com/PKU-Dragon-Team/ucharLib.git
-[submodule "UTF8TextClassification/UStringVector"]
-	path = UTF8TextClassification/UStringVector
-	url = https://github.com/PKU-Dragon-Team/UStringVector.git
