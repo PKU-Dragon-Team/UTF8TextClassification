@@ -7,11 +7,13 @@
 #define BUF_SIZE 0xffff
 
 const llu HASH_SEED = 0;
+const Lf NB_CUTDOWN = 1e-55L;
+const Lf NB_THRESHOLD = 1e-10L;
+const Lf NB_CONVERGE = 10.0L;
 
 /* The stop-list for general use
    通用的停用词表 */
 static bool checker(const uchar uc[]) {
-    //return *uc == '\0' || *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ' || *uc == '.' || *uc == ',' || *uc == '(' || *uc == ')';
     return iscntrl((int)*uc) || isspace((int)*uc) || ispunct((int)*uc);
 }
 
@@ -71,14 +73,14 @@ int load_texts(FILE * input, struct text_list * p_tlist) {
             error
         } state = init;
 
+        int8_t types[TYPE_COUNT] = { 0 };
+        struct ustring * us = NULL;
         llu i = 0;
         llu line = 0;
         bool flag = true;
 
         while (flag) {
             uchar * buf = calloc(BUF_SIZE, sizeof(uchar));
-            int8_t types[TYPE_COUNT] = { 0 };
-            struct ustring * us = NULL;
             bool newline = false;
 
             if (fgets(buf, BUF_SIZE, input) == NULL) {
