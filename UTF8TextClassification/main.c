@@ -2,16 +2,23 @@
 #include "TrainersAndClassifiers.h"
 #include "TextUtilities.h"
 #include <locale.h>
+#include <ctype.h>
 
-// The stop-list for general use
+#define BUF_SIZE 0xffff
+
+const llu HASH_SEED = 0;
+
+/* The stop-list for general use
+   通用的停用词表 */
 static bool checker(const uchar uc[]) {
-    return *uc == '\0' || *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ' || *uc == '.' || *uc == ',' || *uc == '(' || *uc == ')';
+    //return *uc == '\0' || *uc == '\n' || *uc == '\r' || *uc == '\t' || *uc == ' ' || *uc == '.' || *uc == ',' || *uc == '(' || *uc == ')';
+    return iscntrl((int)*uc) || isspace((int)*uc) || ispunct((int)*uc);
 }
 
-// The stop-list for Tibetan
-static bool checker_Tibetan(const uchar uc[]) { // here checks a Tibetan Mark Inter-Syllabic Tsheg (U+0F0B)
+/* The stop-list for Tibetan
+   用于藏语的停用词表 */
+static bool checker_Tibetan(const uchar uc[]) { // here additionally checks a Tibetan Mark Inter-Syllabic Tsheg (U+0F0B)
     return checker(uc) || (*uc == 0xE0 && *(uc + 1) == 0xBC && *(uc + 2) == 0x8B);
-    // The order of checks is to make it won't cause array OOB
 }
 
 static const char * SHORT_USAGE = "Usage: classifier [-h] [-t file_name] [-T file_name] [-c file_name] [-l file_name] [-s file_name] [-o file_name]\n";
@@ -29,7 +36,7 @@ static const char * USAGE =
 "[-/]o file_name : set the file for output."
 "\tIf not given, the stdout will be used.";
 
-// The function to parse a type string
+// The function to parse a type string like "***(001)"
 int parse_type(const uchar a_type[], int8_t types[TYPE_COUNT]) {
     if (a_type == NULL) {
         return -1;
@@ -64,20 +71,22 @@ int load_texts(FILE * input, struct text_list * p_tlist) {
             error
         } state = init;
 
-        uchar s[BUF_SIZE] = { 0 };
-        int8_t types[TYPE_COUNT] = { 0 };
-        struct ustring * us = NULL;
         llu i = 0;
         llu line = 0;
         bool flag = true;
 
         while (flag) {
-            if (fgets(s, BUF_SIZE, input) == NULL) {
+            uchar * buf = calloc(BUF_SIZE, sizeof(uchar));
+            int8_t types[TYPE_COUNT] = { 0 };
+            struct ustring * us = NULL;
+            bool newline = false;
+
+            if (fgets(buf, BUF_SIZE, input) == NULL) {
                 flag = false;
             }
             switch (state) {
             case init:
-                if (strnlen(s, BUF_SIZE) < 4 || !isdigit(s[3])) {
+                if (strnlen(buf, BUF_SIZE) < 4 || !isdigit(buf[3])) {
                     state = error;
                 }
                 else {
@@ -85,33 +94,36 @@ int load_texts(FILE * input, struct text_list * p_tlist) {
                 }
                 break;
             case first:
-                if (s[0] == '*') {
+                if (buf[0] == '*') {
                     state = error;
                 }
                 else {
-                    init_ustring(&us, index, s, BUF_SIZE);
+                    init_ustring(&us, index, buf, BUF_SIZE);
+                    if (buf[BUF_SIZE - 1] == '\0' || buf[BUF_SIZE - 1] == '\n') {
+                        newline = true;
+                    }
                     state = text;
                 }
                 break;
             case text:
-                if (s[0] == '*') {
-                    if (strnlen(s, BUF_SIZE) < 5 || s[3] != '(') {
+                if (buf[0] == '*') {
+                    if (strnlen(buf, BUF_SIZE) < 5 || buf[3] != '(') {
                         state = error;
                     }
                     else {
-                        parse_type(s, types);
+                        parse_type(buf, types);
                         state = type;
                     }
                 }
                 else {
                     struct ustring * temp = NULL;
-                    init_ustring(&temp, index, s, BUF_SIZE);
+                    init_ustring(&temp, index, buf, BUF_SIZE);
                     cat_ustring(us, temp);
                     clear_ustring(&temp);
                 }
                 break;
             case type:
-                if (s[0] != '*') {
+                if (buf[0] != '*') {
                     state = error;
                 }
                 else {
@@ -134,7 +146,10 @@ int load_texts(FILE * input, struct text_list * p_tlist) {
             default:
                 break;
             }
-            ++line;
+            if (newline) {
+                ++line;
+            }
+            free(buf);
         }
         resize_text_list(p_tlist, i);
     }
@@ -306,7 +321,6 @@ int main(int argc, char * argv[]) {
     if (isTrainingFileGiven) {
         printf("Training...\n");
         naive_trainer(statistic, tl_train, commonParser, checker_Tibetan);
-        //NaiveBayes_trainer(statistic, tl_train, commonParser, checker_Tibetan);
         printf("Training finished.\n");
     }
 
@@ -323,14 +337,12 @@ int main(int argc, char * argv[]) {
 
     if (isTestFileGiven) {
         printf("Testing...\n");
-        //KNN_tester(output_stream, tl_test, statistic, commonParser, checker_Tibetan);
         NB_tester(output_stream, tl_test, statistic, commonParser, checker_Tibetan);
         printf("Testing finished.\n");
     }
 
     if (isClassFileGiven) {
         printf("Classing...\n");
-        //KNN_classifier(output_stream, tl_class, statistic, commonParser, checker_Tibetan);
         NB_classifier(output_stream, tl_class, statistic, commonParser, checker_Tibetan);
         printf("Classification finished.\n");
     }
