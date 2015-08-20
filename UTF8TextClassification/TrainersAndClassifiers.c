@@ -232,41 +232,6 @@ int KNN_classifier(FILE * out, struct text_list * p_tl, struct hash_vector * con
     return 0;
 }
 
-int NaiveBayes_trainer(struct hash_vector * ap_hv[TYPE_COUNT + 1], const struct text_list * p_tl, Parser parser, Checker checker)
-{
-    if (ap_hv == NULL || p_tl == NULL) {
-        return -1;
-    }
-
-    for (type_t i = 0; i < TYPE_COUNT; ++i) {
-        if (ap_hv[i] == NULL) {
-            return -1;
-        }
-    }
-
-    for (llu i = 0; i < p_tl->len; ++i) {
-        struct hash_vector * temp;
-        struct ustring_parse_list * p_list;
-        init_hash_vector(&temp);
-        init_uspl(&p_list);
-        parser(p_list, p_tl->list[i].us, checker);
-        append_hash_vector(temp, p_tl->list[i].us, p_list);
-
-        add_hash_vector(ap_hv[TYPE_COUNT], temp);
-        for (type_t j = 0; j < TYPE_COUNT; ++j) {
-            if (p_tl->list[i].types[j] == 1) {
-                add_hash_vector(ap_hv[j], temp);
-            }
-        }
-        clear_hash_vector(&temp);
-    }
-
-    for (type_t i = 0; i < TYPE_COUNT + 1; ++i) {
-        low_cut_hash_vector(ap_hv[i], 1);
-    }
-    return 0;
-}
-
 int NB_tester(FILE * out, struct text_list * p_tl, struct hash_vector * const statistic[TYPE_COUNT + 1], Parser parser, Checker checker)
 {
     llu truePositive = 0;

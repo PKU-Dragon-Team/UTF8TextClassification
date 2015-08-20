@@ -117,6 +117,140 @@ int output_char_analysis(FILE * out, const struct uchar_analysis * uca) {
     return 0;
 }
 
+int parse_type(const uchar a_type[], int8_t types[TYPE_COUNT]) {
+    if (a_type == NULL) {
+        return -1;
+    }
+
+    for (type_t i = 0; i < TYPE_COUNT; ++i) {
+        types[i] = -1;
+    }
+
+    llu n = strlen(a_type);
+    type_t ti = 0;
+    for (llu i = 0; i < n; ++i) {
+        if (ti < TYPE_COUNT && a_type[i] != '*' && a_type[i] != '(' && a_type[i] != ')' && a_type[i] != '\n') {
+            types[ti] = a_type[i] - '0';
+            ++ti;
+        }
+    }
+    return 0;
+}
+
+int load_texts(FILE * input, struct text_list * p_tlist) {
+    if (p_tlist == NULL || input == NULL) {
+        return -1;
+    }
+    else {
+        enum {
+            init,
+            first,
+            text,
+            type,
+            error
+        } state = init;
+
+        int8_t types[TYPE_COUNT] = { 0 };
+        struct ustring * us = NULL;
+        llu i = 0;
+        llu line = 0;
+        bool flag = true;
+
+        while (flag) {
+            uchar * buf = calloc(BUF_SIZE, sizeof(uchar));
+            bool newline = false;
+
+            if (fgets(buf, BUF_SIZE, input) == NULL) {
+                flag = false;
+            }
+            switch (state) {
+            case init:
+                if (strnlen(buf, BUF_SIZE) < 4 || !isdigit(buf[3])) {
+                    state = error;
+                }
+                else {
+                    state = first;
+                }
+                break;
+            case first:
+                if (buf[0] == '*') {
+                    state = error;
+                }
+                else {
+                    init_ustring(&us, index, buf, BUF_SIZE);
+                    if (buf[BUF_SIZE - 1] == '\0' || buf[BUF_SIZE - 1] == '\n') {
+                        newline = true;
+                    }
+                    state = text;
+                }
+                break;
+            case text:
+                if (buf[0] == '*') {
+                    if (strnlen(buf, BUF_SIZE) < 5 || buf[3] != '(') {
+                        state = error;
+                    }
+                    else {
+                        parse_type(buf, types);
+                        state = type;
+                    }
+                }
+                else {
+                    struct ustring * temp = NULL;
+                    init_ustring(&temp, index, buf, BUF_SIZE);
+                    cat_ustring(us, temp);
+                    clear_ustring(&temp);
+                }
+                break;
+            case type:
+                if (buf[0] != '*') {
+                    state = error;
+                }
+                else {
+                    struct text * t = NULL;
+                    init_text(&t, us, types);
+                    if (i >= p_tlist->len) {	// Dynamic Expand
+                        if (resize_text_list(p_tlist, p_tlist->len * 2 + 1) != 0) {
+                            return -1;
+                        }
+                    }
+                    p_tlist->list[i] = *t;
+                    ++i;
+                    state = first;
+                }
+                break;
+            case error:
+                printf("Load error at line %llu, %llu texts have been read.\n", line, i);
+                return -1;
+                break;
+            default:
+                break;
+            }
+            if (newline) {
+                ++line;
+            }
+            free(buf);
+        }
+        resize_text_list(p_tlist, i);
+    }
+    return 0;
+}
+
+int output_texts(FILE * out, const struct text_list * p_tlist) {
+    if (p_tlist == NULL || out == NULL) {
+        return -1;
+    }
+
+    for (llu i = 0; i < p_tlist->len; ++i) {
+        fprintf(out, "***%llu\n%s***(", i + 1, p_tlist->list[i].us->string);
+        for (type_t j = 0; j < TYPE_COUNT; ++j) {
+            if (p_tlist->list[i].types[j] != -1) {
+                fprintf(out, "%d", p_tlist->list[i].types[j]);
+            }
+        }
+        fprintf(out, ")%s", (i == p_tlist->len - 1) ? "" : "\n");
+    }
+    return 0;
+}
 
 int save_vectors(FILE * output, struct hash_vector * const ap_hv[TYPE_COUNT + 1]) {
     if (output == NULL || ap_hv == NULL) {
