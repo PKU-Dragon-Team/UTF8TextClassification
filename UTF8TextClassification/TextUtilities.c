@@ -169,6 +169,7 @@ int load_texts(FILE * input, struct text_list * p_tlist) {
                     state = error;
                 }
                 else {
+                    newline = true;
                     state = first;
                 }
                 break;
@@ -190,11 +191,15 @@ int load_texts(FILE * input, struct text_list * p_tlist) {
                         state = error;
                     }
                     else {
+                        newline = true;
                         parse_type(buf, types);
                         state = type;
                     }
                 }
                 else {
+                    if (buf[BUF_SIZE - 1] == '\0' || buf[BUF_SIZE - 1] == '\n') {
+                        newline = true;
+                    }
                     struct ustring * temp = NULL;
                     init_ustring(&temp, index, buf, BUF_SIZE);
                     cat_ustring(us, temp);
@@ -206,6 +211,7 @@ int load_texts(FILE * input, struct text_list * p_tlist) {
                     state = error;
                 }
                 else {
+                    newline = true;
                     struct text * t = NULL;
                     init_text(&t, us, types);
                     if (i >= p_tlist->len) {	// Dynamic Expand
