@@ -191,7 +191,7 @@ int KNN_tester(FILE * out, struct text_list * p_tl, struct hash_vector * const s
             "        ----rate: %Lf%%\n"
             "        False Positive: %llu\n"
             "        ----rate: %Lf%%\n",
-            i, PT[i], TP[i], (Lf)TP[i] / (Lf)PT[i] * 100, \
+            i + 1, PT[i], TP[i], (Lf)TP[i] / (Lf)PT[i] * 100, \
             FN[i], (Lf)FN[i] / (Lf)PT[i] * 100, \
             NT[i], TN[i], (Lf)TN[i] / (Lf)NT[i] * 100, \
             FP[i], (Lf)FP[i] / (Lf)NT[i] * 100);
@@ -358,7 +358,7 @@ int NB_tester(FILE * out, struct text_list * p_tl, struct hash_vector * const st
             "        ----rate: %Lf%%\n"
             "        False Positive: %llu\n"
             "        ----rate: %Lf%%\n",
-            i, PT[i], TP[i], (Lf)TP[i] / (Lf)PT[i] * 100, \
+            i + 1, PT[i], TP[i], (Lf)TP[i] / (Lf)PT[i] * 100, \
             FN[i], (Lf)FN[i] / (Lf)PT[i] * 100, \
             NT[i], TN[i], (Lf)TN[i] / (Lf)NT[i] * 100, \
             FP[i], (Lf)FP[i] / (Lf)NT[i] * 100);
