@@ -1,4 +1,53 @@
 #include "TrainersAndClassifiers.h"
+#define OUTPUT_TEST     \
+{\
+    Lf precision = (Lf)truePositive / ((Lf)truePositive + (Lf)falsePositive);\
+    Lf recall = (Lf)truePositive / (Lf)PTotal;\
+    printf("\n"\
+    "%llu Total\n"\
+    "    Positive Total: %llu\n"\
+    "        True Positive: %llu\n"\
+    "        ----rate: %Lf%%\n"\
+    "        False Negative: %llu\n"\
+    "        ----rate: %Lf%%\n"\
+    "    Negative Total: %llu\n"\
+    "        True Negative: %llu\n"\
+    "        ----rate: %Lf%%\n"\
+    "        False Positive: %llu\n"\
+    "        ----rate: %Lf%%\n"\
+    "   Precision: %Lf%%\n"\
+    "   Recall: %Lf%%\n"\
+    "   F1-measure: %Lf%%\n",\
+    p_tl->len, PTotal, truePositive, (Lf)truePositive / (Lf)PTotal * 100, \
+    falseNegative, (Lf)falseNegative / (Lf)PTotal * 100, \
+    NTotal, trueNegative, (Lf)trueNegative / (Lf)NTotal * 100, \
+    falsePositive, (Lf)falsePositive / (Lf)NTotal * 100, \
+    precision * 100, recall * 100, 2 * precision*recall / (precision + recall) * 100);\
+}\
+for (type_t i = 0; i < TYPE_COUNT; ++i) {\
+    Lf precision = (Lf)TP[i] / ((Lf)TP[i] + (Lf)FP[i]);\
+    Lf recall = (Lf)TP[i] / (Lf)PT[i];\
+    printf("\n"\
+        "    Type %d:\n"\
+        "    Positive Total: %llu\n"\
+        "        True Positive: %llu\n"\
+        "        ----rate: %Lf%%\n"\
+        "        False Negative: %llu\n"\
+        "        ----rate: %Lf%%\n"\
+        "    Negative Total: %llu\n"\
+        "        True Negative: %llu\n"\
+        "        ----rate: %Lf%%\n"\
+        "        False Positive: %llu\n"\
+        "        ----rate: %Lf%%\n"\
+        "   Precision: %Lf%%\n"\
+        "   Recall: %Lf%%\n"\
+        "   F1-measure: %Lf%%\n",\
+        i + 1, PT[i], TP[i], (Lf)TP[i] / (Lf)PT[i] * 100, \
+        FN[i], (Lf)FN[i] / (Lf)PT[i] * 100, \
+        NT[i], TN[i], (Lf)TN[i] / (Lf)NT[i] * 100, \
+        FP[i], (Lf)FP[i] / (Lf)NT[i] * 100, \
+        precision * 100, recall * 100, 2 * precision * recall / (precision + recall) * 100);\
+}
 
 static Lf get_possibility(const struct hash_vector * text, const struct hash_vector * statistic) {
     const struct hash_vector * p1 = text;
@@ -161,41 +210,7 @@ int KNN_tester(FILE * out, struct text_list * p_tl, struct hash_vector * const s
         }
         clear_hash_vector(&temp);
     }
-    printf("\n"
-        "%llu Total\n"
-        "    Positive Total: %llu\n"
-        "        True Positive: %llu\n"
-        "        ----rate: %Lf%%\n"
-        "        False Negative: %llu\n"
-        "        ----rate: %Lf%%\n"
-        "    Negative Total: %llu\n"
-        "        True Negative: %llu\n"
-        "        ----rate: %Lf%%\n"
-        "        False Positive: %llu\n"
-        "        ----rate: %Lf%%\n",
-        p_tl->len, PTotal, truePositive, (Lf)truePositive / (Lf)PTotal * 100, \
-        falseNegative, (Lf)falseNegative / (Lf)PTotal * 100, \
-        NTotal, trueNegative, (Lf)trueNegative / (Lf)NTotal * 100, \
-        falsePositive, (Lf)falsePositive / (Lf)NTotal * 100);
-
-    for (type_t i = 0; i < TYPE_COUNT; ++i) {
-        printf("\n"
-            "    Type %d:\n"
-            "    Positive Total: %llu\n"
-            "        True Positive: %llu\n"
-            "        ----rate: %Lf%%\n"
-            "        False Negative: %llu\n"
-            "        ----rate: %Lf%%\n"
-            "    Negative Total: %llu\n"
-            "        True Negative: %llu\n"
-            "        ----rate: %Lf%%\n"
-            "        False Positive: %llu\n"
-            "        ----rate: %Lf%%\n",
-            i + 1, PT[i], TP[i], (Lf)TP[i] / (Lf)PT[i] * 100, \
-            FN[i], (Lf)FN[i] / (Lf)PT[i] * 100, \
-            NT[i], TN[i], (Lf)TN[i] / (Lf)NT[i] * 100, \
-            FP[i], (Lf)FP[i] / (Lf)NT[i] * 100);
-    }
+    OUTPUT_TEST
     return 0;
 }
 
@@ -328,41 +343,7 @@ int NB_tester(FILE * out, struct text_list * p_tl, struct hash_vector * const st
         }
         clear_hash_vector(&temp);
     }
-    printf("\n"
-        "%llu Total\n"
-        "    Positive Total: %llu\n"
-        "        True Positive: %llu\n"
-        "        ----rate: %Lf%%\n"
-        "        False Negative: %llu\n"
-        "        ----rate: %Lf%%\n"
-        "    Negative Total: %llu\n"
-        "        True Negative: %llu\n"
-        "        ----rate: %Lf%%\n"
-        "        False Positive: %llu\n"
-        "        ----rate: %Lf%%\n",
-        p_tl->len, PTotal, truePositive, (Lf)truePositive / (Lf)PTotal * 100, \
-        falseNegative, (Lf)falseNegative / (Lf)PTotal * 100, \
-        NTotal, trueNegative, (Lf)trueNegative / (Lf)NTotal * 100, \
-        falsePositive, (Lf)falsePositive / (Lf)NTotal * 100);
-
-    for (type_t i = 0; i < TYPE_COUNT; ++i) {
-        printf("\n"
-            "    Type %d:\n"
-            "    Positive Total: %llu\n"
-            "        True Positive: %llu\n"
-            "        ----rate: %Lf%%\n"
-            "        False Negative: %llu\n"
-            "        ----rate: %Lf%%\n"
-            "    Negative Total: %llu\n"
-            "        True Negative: %llu\n"
-            "        ----rate: %Lf%%\n"
-            "        False Positive: %llu\n"
-            "        ----rate: %Lf%%\n",
-            i + 1, PT[i], TP[i], (Lf)TP[i] / (Lf)PT[i] * 100, \
-            FN[i], (Lf)FN[i] / (Lf)PT[i] * 100, \
-            NT[i], TN[i], (Lf)TN[i] / (Lf)NT[i] * 100, \
-            FP[i], (Lf)FP[i] / (Lf)NT[i] * 100);
-    }
+    OUTPUT_TEST
     return 0;
 }
 
@@ -401,3 +382,5 @@ int NB_classifier(FILE * out, struct text_list * p_tl, struct hash_vector * cons
     }
     return 0;
 }
+
+#undef OUTPUT_TEST
